@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 type Product = {
   id: number;
   name: string;
+  character: string;
+  variant: string;
   brand: string;
   ip: string;
   category: string;
@@ -15,24 +17,34 @@ type Product = {
 };
 
 const products: Product[] = [
-  { id: 1, name: "路飞 五档", brand: "BANDAI", ip: "海贼王", category: "日系手办", price: 329, size: "18CM", image: "/products/luffy.png", badge: "本周精选" },
-  { id: 2, name: "芙莉莲 行李箱", brand: "TAITO", ip: "葬送的芙莉莲", category: "日系手办", price: 269, size: "17CM", image: "/products/frieren.png", badge: "日本进口" },
-  { id: 3, name: "艾伦 ROS", brand: "BANDAI", ip: "进击的巨人", category: "日系手办", price: 399, size: "26CM", image: "/products/eren.png", badge: "限量" },
-  { id: 4, name: "MEGA 喷火龙X", brand: "BANDAI", ip: "宝可梦", category: "模型拼装", price: 299, size: "17CM", image: "/products/charizard.png", badge: "热卖" },
-  { id: 5, name: "野原新之助", brand: "BANDAI", ip: "蜡笔小新", category: "日系手办", price: 239, size: "11CM", image: "/products/shinchan.png" },
-  { id: 6, name: "阿米娅 报童", brand: "FURYU", ip: "明日方舟", category: "预售", price: 359, size: "16CM", image: "/products/amiya.png", badge: "预售" },
-  { id: 7, name: "孙悟空 历史盒子2", brand: "BANDAI", ip: "七龙珠", category: "日系手办", price: 289, size: "13CM", image: "/products/goku.png", badge: "新品" },
-  { id: 8, name: "宇智波带土 VS", brand: "BANDAI", ip: "火影忍者", category: "日系手办", price: 319, size: "15CM", image: "/products/obito.png" },
-  { id: 9, name: "碧翠丝", brand: "SEGA", ip: "Re:从零开始", category: "日系手办", price: 279, size: "16CM", image: "/products/beatrice.jpg", badge: "日本进口" },
-  { id: 10, name: "伊蕾娜 泳装", brand: "TAITO", ip: "魔女之旅", category: "日系手办", price: 299, size: "20CM", image: "/products/elaina.png" },
-  { id: 11, name: "初音未来 波斯菊仙子", brand: "FURYU", ip: "初音未来", category: "预售", price: 309, size: "15CM", image: "/products/miku.png", badge: "预售" },
-  { id: 12, name: "元祖高达 Ver. 3.0", brand: "BANDAI", ip: "机动战士高达", category: "模型拼装", price: 459, size: "18CM", image: "/products/gundam.png", badge: "进口现货" },
+  { id: 1, name: "路飞 五档", character: "路飞", variant: "五档觉醒", brand: "BANDAI", ip: "海贼王", category: "日系手办", price: 329, size: "18CM", image: "/products/luffy.png", badge: "本周精选" },
+  { id: 13, name: "路飞 五档战斗版", character: "路飞", variant: "五档觉醒 · 战斗版", brand: "BANDAI", ip: "海贼王", category: "日系手办", price: 369, size: "19CM", image: "/products/luffy.png", badge: "场景款" },
+  { id: 14, name: "路飞 五档限定版", character: "路飞", variant: "五档觉醒 · 限定版", brand: "BANDAI", ip: "海贼王", category: "预售", price: 429, size: "18CM", image: "/products/luffy.png", badge: "限定" },
+  { id: 2, name: "芙莉莲 行李箱", character: "芙莉莲", variant: "行李箱", brand: "TAITO", ip: "葬送的芙莉莲", category: "日系手办", price: 269, size: "17CM", image: "/products/frieren.png", badge: "日本进口" },
+  { id: 3, name: "艾伦 ROS", character: "艾伦", variant: "ROS 战斗姿态", brand: "BANDAI", ip: "进击的巨人", category: "日系手办", price: 399, size: "26CM", image: "/products/eren.png", badge: "限量" },
+  { id: 4, name: "MEGA 喷火龙X", character: "喷火龙X", variant: "MEGA 拼装版", brand: "BANDAI", ip: "宝可梦", category: "模型拼装", price: 299, size: "17CM", image: "/products/charizard.png", badge: "热卖" },
+  { id: 5, name: "野原新之助", character: "野原新之助", variant: "经典日常服", brand: "BANDAI", ip: "蜡笔小新", category: "日系手办", price: 239, size: "11CM", image: "/products/shinchan.png" },
+  { id: 6, name: "阿米娅 报童", character: "阿米娅", variant: "报童装", brand: "FURYU", ip: "明日方舟", category: "预售", price: 359, size: "16CM", image: "/products/amiya.png", badge: "预售" },
+  { id: 7, name: "孙悟空 历史盒子2", character: "孙悟空", variant: "历史盒子 2", brand: "BANDAI", ip: "七龙珠", category: "日系手办", price: 289, size: "13CM", image: "/products/goku.png", badge: "新品" },
+  { id: 19, name: "孙悟空 历史盒子战斗版", character: "孙悟空", variant: "历史盒子 2 · 战斗版", brand: "BANDAI", ip: "七龙珠", category: "日系手办", price: 329, size: "15CM", image: "/products/goku.png", badge: "战斗版" },
+  { id: 20, name: "孙悟空 历史盒子特典版", character: "孙悟空", variant: "历史盒子 2 · 特典版", brand: "BANDAI", ip: "七龙珠", category: "预售", price: 369, size: "15CM", image: "/products/goku.png", badge: "特典" },
+  { id: 8, name: "宇智波带土 VS", character: "宇智波带土", variant: "VS 对战版", brand: "BANDAI", ip: "火影忍者", category: "日系手办", price: 319, size: "15CM", image: "/products/obito.png" },
+  { id: 15, name: "宇智波带土 神威", character: "宇智波带土", variant: "神威场景版", brand: "BANDAI", ip: "火影忍者", category: "日系手办", price: 369, size: "17CM", image: "/products/obito.png", badge: "场景款" },
+  { id: 16, name: "宇智波带土 白面具", character: "宇智波带土", variant: "白面具限定版", brand: "BANDAI", ip: "火影忍者", category: "预售", price: 419, size: "18CM", image: "/products/obito.png", badge: "限定" },
+  { id: 9, name: "碧翠丝", character: "碧翠丝", variant: "经典礼服", brand: "SEGA", ip: "Re:从零开始", category: "日系手办", price: 279, size: "16CM", image: "/products/beatrice.jpg", badge: "日本进口" },
+  { id: 10, name: "伊蕾娜 泳装", character: "伊蕾娜", variant: "夏日泳装", brand: "TAITO", ip: "魔女之旅", category: "日系手办", price: 299, size: "20CM", image: "/products/elaina.png" },
+  { id: 11, name: "初音未来 波斯菊仙子", character: "初音未来", variant: "波斯菊仙子", brand: "FURYU", ip: "初音未来", category: "预售", price: 309, size: "15CM", image: "/products/miku.png", badge: "预售" },
+  { id: 17, name: "初音未来 波斯菊特典色", character: "初音未来", variant: "波斯菊仙子 · 特典色", brand: "FURYU", ip: "初音未来", category: "预售", price: 349, size: "15CM", image: "/products/miku.png", badge: "特典色" },
+  { id: 18, name: "初音未来 波斯菊典藏版", character: "初音未来", variant: "波斯菊仙子 · 典藏版", brand: "FURYU", ip: "初音未来", category: "预售", price: 389, size: "16CM", image: "/products/miku.png", badge: "典藏" },
+  { id: 12, name: "元祖高达 Ver. 3.0", character: "RX-78-2", variant: "Ver. 3.0", brand: "BANDAI", ip: "机动战士高达", category: "模型拼装", price: 459, size: "18CM", image: "/products/gundam.png", badge: "进口现货" },
 ];
 
 const categories = ["全部", "日系手办", "模型拼装", "预售"];
 
 export default function Home() {
   const [category, setCategory] = useState("全部");
+  const [selectedIp, setSelectedIp] = useState("海贼王");
+  const [selectedCharacter, setSelectedCharacter] = useState("路飞");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -41,14 +53,36 @@ export default function Home() {
   const [cart, setCart] = useState<Record<number, number>>({});
   const [toast, setToast] = useState("");
 
+  const ipGroups = useMemo(() => {
+    const groups = Array.from(new Set(products.map((product) => product.ip))).map((ip) => {
+      const ipProducts = products.filter((product) => product.ip === ip);
+      return {
+        ip,
+        characterCount: new Set(ipProducts.map((product) => product.character)).size,
+        styleCount: ipProducts.length,
+      };
+    });
+    return groups.sort((a, b) => b.styleCount - a.styleCount || a.ip.localeCompare(b.ip, "zh-CN"));
+  }, []);
+
+  const charactersForIp = useMemo(() => {
+    const scoped = selectedIp === "全部IP" ? products : products.filter((product) => product.ip === selectedIp);
+    return Array.from(new Set(scoped.map((product) => product.character))).map((character) => {
+      const characterProducts = scoped.filter((product) => product.character === character);
+      return { character, styleCount: characterProducts.length, image: characterProducts[0].image };
+    });
+  }, [selectedIp]);
+
   const visibleProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return products.filter((product) => {
       const categoryMatch = category === "全部" || product.category === category;
-      const queryMatch = !normalized || `${product.name}${product.brand}${product.ip}`.toLowerCase().includes(normalized);
-      return categoryMatch && queryMatch;
+      const ipMatch = selectedIp === "全部IP" || product.ip === selectedIp;
+      const characterMatch = selectedCharacter === "全部角色" || product.character === selectedCharacter;
+      const queryMatch = !normalized || `${product.name}${product.variant}${product.character}${product.brand}${product.ip}`.toLowerCase().includes(normalized);
+      return categoryMatch && ipMatch && characterMatch && queryMatch;
     });
-  }, [category, query]);
+  }, [category, query, selectedCharacter, selectedIp]);
 
   const cartItems = products.filter((product) => cart[product.id]);
   const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
@@ -88,7 +122,27 @@ export default function Home() {
 
   function browseCategory(nextCategory: string) {
     setCategory(nextCategory);
+    setSelectedIp("全部IP");
+    setSelectedCharacter("全部角色");
     setMenuOpen(false);
+    document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function chooseIp(nextIp: string) {
+    setSelectedIp(nextIp);
+    setCategory("全部");
+    setQuery("");
+    if (nextIp === "全部IP") {
+      setSelectedCharacter("全部角色");
+    } else {
+      setSelectedCharacter(products.find((product) => product.ip === nextIp)?.character || "全部角色");
+    }
+  }
+
+  function chooseCharacter(character: string) {
+    setSelectedCharacter(character);
+    setCategory("全部");
+    setQuery("");
     document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -107,15 +161,15 @@ export default function Home() {
           <span className="brand-cn">原界</span>
         </a>
         <nav className="desktop-nav" aria-label="主导航">
+          <a href="#catalog">按IP选购</a>
           <button onClick={() => browseCategory("全部")}>新品</button>
           <button onClick={() => browseCategory("日系手办")}>日系手办</button>
           <button onClick={() => browseCategory("模型拼装")}>模型拼装</button>
           <button onClick={() => browseCategory("预售")}>预售</button>
-          <a href="#brands">品牌</a>
         </nav>
         <div className="header-actions">
           <button onClick={() => setSearchOpen(true)} aria-label="搜索商品">搜索</button>
-          <button className="favorite-header" onClick={() => { setQuery(""); setCategory("全部"); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }} aria-label={`收藏 ${favorites.length} 件`}>
+          <button className="favorite-header" onClick={() => { setQuery(""); setCategory("全部"); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }} aria-label={`收藏 ${favorites.length} 件`}>
             收藏 <span>{favorites.length}</span>
           </button>
           <button onClick={() => setCartOpen(true)} aria-label={`购物袋 ${cartCount} 件`}>
@@ -155,13 +209,60 @@ export default function Home() {
         <div><span>心</span><strong>售后无忧</strong><small>破损包赔</small></div>
       </section>
 
+      <section className="collection-browser" id="catalog">
+        <div className="collection-heading">
+          <div>
+            <p className="eyebrow">IP → CHARACTER → STYLE</p>
+            <h2>先选作品，再选角色。</h2>
+          </div>
+          <p>商品按照 IP、角色和具体款式三级归档。同一角色的景品、限定版与预售款会集中展示，查找更快。</p>
+        </div>
+
+        <div className="catalog-steps" aria-label="商品分类层级">
+          <span className="active"><b>01</b> 选择 IP</span>
+          <span className={selectedIp !== "全部IP" ? "active" : ""}><b>02</b> 选择角色</span>
+          <span className={selectedCharacter !== "全部角色" ? "active" : ""}><b>03</b> 浏览款式</span>
+        </div>
+
+        <div className="catalog-label-row"><strong>IP 作品馆</strong><small>{ipGroups.length} 个作品系列</small></div>
+        <div className="ip-selector" role="group" aria-label="选择IP作品">
+          <button className={selectedIp === "全部IP" ? "active" : ""} onClick={() => chooseIp("全部IP")}>
+            <span>全部 IP</span><small>{products.length} 款藏品</small>
+          </button>
+          {ipGroups.map((group) => (
+            <button key={group.ip} className={selectedIp === group.ip ? "active" : ""} onClick={() => chooseIp(group.ip)}>
+              <span>{group.ip}</span><small>{group.characterCount} 个角色 · {group.styleCount} 款</small>
+            </button>
+          ))}
+        </div>
+
+        <div className="catalog-label-row"><strong>角色档案</strong><small>{selectedIp === "全部IP" ? "先选择一个 IP 查看角色" : `${selectedIp} · ${charactersForIp.length} 个角色`}</small></div>
+        <div className="character-selector" role="group" aria-label="选择角色">
+          {selectedIp === "全部IP" && (
+            <button className={selectedCharacter === "全部角色" ? "active" : ""} onClick={() => chooseCharacter("全部角色")}>
+              <span className="character-monogram">ALL</span><span><strong>全部角色</strong><small>{products.length} 款</small></span>
+            </button>
+          )}
+          {charactersForIp.map((item) => (
+            <button key={item.character} className={selectedCharacter === item.character ? "active" : ""} onClick={() => chooseCharacter(item.character)}>
+              <img src={item.image} alt="" /><span><strong>{item.character}</strong><small>{item.styleCount} 个款式</small></span>
+            </button>
+          ))}
+        </div>
+
+        <div className="catalog-path" aria-live="polite">
+          <span>当前位置</span>
+          <strong>{selectedIp}</strong><i>→</i><strong>{selectedCharacter}</strong><i>→</i><b>{visibleProducts.length} 个款式</b>
+        </div>
+      </section>
+
       <section className="product-section" id="new-arrivals">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">CURATED THIS WEEK</p>
-            <h2>本周新到</h2>
+            <p className="eyebrow">SELECTED STYLES</p>
+            <h2>{selectedCharacter === "全部角色" ? "全部角色款式" : `${selectedCharacter} · 全部款式`}</h2>
           </div>
-          <p>来自日漫社买手店的正版手办精选。展示价格以上线时商品详情为准。</p>
+          <p>{selectedIp === "全部IP" ? "浏览全部 IP 与角色的正版手办精选。" : `正在浏览「${selectedIp}」角色系列。`} 展示价格以上线时商品详情为准。</p>
         </div>
 
         <div className="product-toolbar">
@@ -187,15 +288,15 @@ export default function Home() {
                 <button className="quick-add" onClick={() => addToCart(product)}>加入购物袋 <span>＋</span></button>
               </div>
               <div className="product-meta">
-                <p>{product.brand} · {product.ip}</p>
-                <div className="product-title-row"><h3>{product.name} <span>{product.size}</span></h3><strong>¥{product.price}</strong></div>
+                <p>{product.ip} · {product.character} · {product.brand}</p>
+                <div className="product-title-row"><h3>{product.variant} <span>{product.size}</span></h3><strong>¥{product.price}</strong></div>
               </div>
             </article>
           ))}
         </div>
 
         {visibleProducts.length === 0 && (
-          <div className="empty-state"><h3>没有找到相关藏品</h3><p>换个关键词，或浏览全部商品。</p><button onClick={() => { setQuery(""); setCategory("全部"); }}>查看全部</button></div>
+          <div className="empty-state"><h3>没有找到相关藏品</h3><p>换个关键词，或浏览全部商品。</p><button onClick={() => { setQuery(""); setCategory("全部"); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>查看全部</button></div>
         )}
       </section>
 
@@ -244,10 +345,11 @@ export default function Home() {
           <button className="overlay-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">关闭</button>
           <div className="mobile-menu-brand">ORIGI <span>原界</span></div>
           <nav>
-            <button onClick={() => browseCategory("全部")}>新品 <span>01</span></button>
-            <button onClick={() => browseCategory("日系手办")}>日系手办 <span>02</span></button>
-            <button onClick={() => browseCategory("模型拼装")}>模型拼装 <span>03</span></button>
-            <button onClick={() => browseCategory("预售")}>预售 <span>04</span></button>
+            <button onClick={() => { setMenuOpen(false); document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); }}>按 IP / 角色选购 <span>01</span></button>
+            <button onClick={() => browseCategory("全部")}>新品 <span>02</span></button>
+            <button onClick={() => browseCategory("日系手办")}>日系手办 <span>03</span></button>
+            <button onClick={() => browseCategory("模型拼装")}>模型拼装 <span>04</span></button>
+            <button onClick={() => browseCategory("预售")}>预售 <span>05</span></button>
           </nav>
         </div>
       )}
@@ -260,9 +362,9 @@ export default function Home() {
             <label htmlFor="site-search">想找哪一件藏品？</label>
             <div className="search-input-row">
               <input id="site-search" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入角色、IP 或品牌" />
-              <button onClick={() => { setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button>
+              <button onClick={() => { setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button>
             </div>
-            <div className="search-suggestions"><span>热门：</span>{["海贼王", "芙莉莲", "BANDAI", "初音未来"].map((item) => <button key={item} onClick={() => setQuery(item)}>{item}</button>)}</div>
+            <div className="search-suggestions"><span>热门：</span>{["海贼王", "路飞", "火影忍者", "初音未来"].map((item) => <button key={item} onClick={() => { setQuery(item); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>{item}</button>)}</div>
           </div>
         </div>
       )}
@@ -277,7 +379,7 @@ export default function Home() {
               ) : cartItems.map((product) => (
                 <div className="cart-item" key={product.id}>
                   <img src={product.image} alt={product.name} />
-                  <div className="cart-item-copy"><small>{product.brand} · {product.ip}</small><strong>{product.name} {product.size}</strong><span>¥{product.price}</span><div className="quantity"><button onClick={() => updateQuantity(product.id, -1)} aria-label={`减少 ${product.name} 数量`}>−</button><span>{cart[product.id]}</span><button onClick={() => updateQuantity(product.id, 1)} aria-label={`增加 ${product.name} 数量`}>＋</button></div></div>
+                  <div className="cart-item-copy"><small>{product.ip} · {product.character} · {product.brand}</small><strong>{product.variant} {product.size}</strong><span>¥{product.price}</span><div className="quantity"><button onClick={() => updateQuantity(product.id, -1)} aria-label={`减少 ${product.name} 数量`}>−</button><span>{cart[product.id]}</span><button onClick={() => updateQuantity(product.id, 1)} aria-label={`增加 ${product.name} 数量`}>＋</button></div></div>
                 </div>
               ))}
             </div>
