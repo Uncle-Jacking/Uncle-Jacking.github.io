@@ -325,7 +325,7 @@ export default function Home() {
         <div><span>203</span><strong>商品合集</strong><small>完整收录系列商品</small></div>
         <div><span>{products.length}</span><strong>独立商品</strong><small>每个款式单独展示</small></div>
         <div><span>{ipGroups.length}</span><strong>IP 作品</strong><small>自动整理作品归属</small></div>
-        <div><span>HD</span><strong>高清图片</strong><small>升级 800 × 800 商品图</small></div>
+        <div><span>HD</span><strong>无水印原图</strong><small>原始分辨率商品图片</small></div>
       </section>
 
       <section className="collection-browser" id="catalog">
@@ -397,7 +397,7 @@ export default function Home() {
         <div className="provenance-copy">
           <p className="eyebrow">THE COMPLETE ARCHIVE</p><h2>900 多件商品，<br />一间店里看完。</h2>
           <p>从海贼王、鬼灭之刃、咒术回战，到高达、初音未来和更多热门作品，全部商品已经整理进原界目录。选择 IP 后进入角色，再浏览同一角色的不同造型、版本与尺寸。</p>
-          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>916 件独立商品</small></div><div><span>02</span><strong>高清图像</strong><small>800 × 800 商品图</small></div><div><span>03</span><strong>三级分类</strong><small>IP、角色、款式</small></div></div>
+          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>916 件独立商品</small></div><div><span>02</span><strong>无水印原图</strong><small>保留原始分辨率</small></div><div><span>03</span><strong>三级分类</strong><small>IP、角色、款式</small></div></div>
         </div>
       </section>
 
