@@ -55,8 +55,8 @@ main { overflow: hidden; }
 .hero-product-card span { color: var(--forest); font-weight: 800; font-size: 10px; letter-spacing: .16em; }
 .hero-product-card strong { font-size: 18px; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .hero-price { font-size: 23px; font-weight: 800; }
-.hero-product-card > a:last-child { width: 44px; height: 44px; border: 1px solid var(--ink); background: transparent; display: grid; place-items: center; cursor: pointer; font-size: 20px; transition: background .2s, color .2s; }
-.hero-product-card > a:last-child:hover { background: var(--ink); color: var(--white); }
+.hero-product-card > button:last-child { width: 44px; height: 44px; border: 1px solid var(--ink); background: transparent; display: grid; place-items: center; cursor: pointer; font-size: 20px; transition: background .2s, color .2s; }
+.hero-product-card > button:last-child:hover { background: var(--ink); color: var(--white); }
 
 .trust-band { margin: 0 4.6vw; min-height: 118px; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; border-bottom: 1px solid var(--line); }
 .trust-band > div { min-height: 54px; display: grid; grid-template-columns: 38px auto; grid-template-rows: 1fr 1fr; column-gap: 13px; align-content: center; padding: 0 28px; border-right: 1px solid var(--line); }
@@ -132,11 +132,6 @@ main { overflow: hidden; }
 .product-title-row h3 { margin: 0; font-size: 15px; font-weight: 650; line-height: 1.4; }
 .product-title-row h3 span { color: var(--muted); font-size: 11px; font-weight: 400; }
 .product-title-row strong { white-space: nowrap; font-size: 14px; }
-.product-source-title { margin-top: 10px !important; line-height: 1.55; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; text-transform: none; letter-spacing: 0 !important; }
-.load-more { display: flex; justify-content: center; margin-top: 58px; }
-.load-more button { min-width: 250px; border: 1px solid var(--ink); background: transparent; padding: 17px 24px; cursor: pointer; display: flex; justify-content: space-between; gap: 28px; transition: background .2s, color .2s; }
-.load-more button:hover { background: var(--ink); color: var(--white); }
-.load-more span { color: var(--muted); font-size: 10px; }
 .empty-state { grid-column: 1 / -1; text-align: center; padding: 100px 20px; border: 1px solid var(--line); }
 .empty-state h3 { font-size: 25px; margin: 0 0 8px; }
 .empty-state p { color: var(--muted); }
@@ -246,6 +241,7 @@ footer { background: var(--ink); color: #ecebe5; padding: 70px 4.6vw 32px; displ
   .header-actions button { font-size: 0; }
   .header-actions button:first-child { display: block; }
   .header-actions button:first-child::before { content: "搜"; font-size: 12px; }
+  .header-actions button:last-child::before { content: "袋"; font-size: 12px; }
   .header-actions button span { font-size: 8px; vertical-align: 1px; }
   .hero { min-height: auto; grid-template-columns: 1fr; padding: 0 20px 20px; }
   .hero-copy { padding: 60px 4px 42px; min-height: 520px; }
@@ -255,7 +251,7 @@ footer { background: var(--ink); color: #ecebe5; padding: 70px 4.6vw 32px; displ
   .hero-footnote { margin-top: 48px; }
   .hero-media { min-height: 480px; }
   .hero-product-card { left: 14px; right: 14px; bottom: 14px; grid-template-columns: 1fr auto; padding: 17px; gap: 10px; }
-  .hero-product-card > a:last-child { display: none; }
+  .hero-product-card > button:last-child { display: none; }
   .hero-price { font-size: 17px; }
   .hero-product-card strong { font-size: 14px; }
   .trust-band { margin: 0 20px; grid-template-columns: 1fr 1fr; padding: 20px 0; }

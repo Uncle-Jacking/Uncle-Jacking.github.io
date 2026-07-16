@@ -7,7 +7,6 @@ type RawProduct = {
   id: number;
   sku: string;
   title: string;
-  url: string;
   image: string;
   variants: Array<{ label: string; image: string }>;
 };
@@ -22,10 +21,7 @@ type Product = {
   ip: string;
   category: "手办" | "拼装模型";
   image: string;
-  url: string;
 };
-
-const JD_STORE_URL = "https://mall.jd.com/index-86567558.html?from=pc&cid=0";
 
 const ipPatterns: Array<[string, RegExp]> = [
   ["海贼王", /海贼王|海贼船/],
@@ -192,7 +188,6 @@ const products: Product[] = catalogCollections.flatMap((item) => {
       ip,
       category: /高达|拼装|30MS|境界战机|甲虫机娘/i.test(item.title) ? "拼装模型" : "手办",
       image: option.image || item.image,
-      url: item.url,
     };
   });
 });
@@ -201,13 +196,13 @@ const categories = ["全部", "手办", "拼装模型"] as const;
 
 export default function Home() {
   const [category, setCategory] = useState<(typeof categories)[number]>("全部");
-  const [selectedIp, setSelectedIp] = useState("海贼王");
+  const [selectedIp, setSelectedIp] = useState("全部IP");
   const [selectedCharacter, setSelectedCharacter] = useState("全部角色");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [displayLimit, setDisplayLimit] = useState(36);
+  const [cart, setCart] = useState<string[]>([]);
   const [toast, setToast] = useState("");
 
   const ipGroups = useMemo(() => {
@@ -237,7 +232,6 @@ export default function Home() {
     });
   }, [category, query, selectedCharacter, selectedIp]);
 
-  const displayedProducts = visibleProducts.slice(0, displayLimit);
   const heroProduct = products[0];
 
   useEffect(() => {
@@ -255,11 +249,15 @@ export default function Home() {
     setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   }
 
+  function addToCart(product: Product) {
+    setCart((current) => current.includes(product.id) ? current : [...current, product.id]);
+    setToast(`${product.variant} 已加入购物袋`);
+  }
+
   function browseCategory(nextCategory: (typeof categories)[number]) {
     setCategory(nextCategory);
     setSelectedIp("全部IP");
     setSelectedCharacter("全部角色");
-    setDisplayLimit(36);
     setMenuOpen(false);
     document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
   }
@@ -269,23 +267,21 @@ export default function Home() {
     setSelectedCharacter("全部角色");
     setCategory("全部");
     setQuery("");
-    setDisplayLimit(36);
   }
 
   function chooseCharacter(character: string) {
     setSelectedCharacter(character);
     setCategory("全部");
     setQuery("");
-    setDisplayLimit(36);
     document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
     <main>
       <div className="announcement">
-        <span>已同步京东店铺公开商品</span>
-        <span className="announcement-center">203 个商品合集 · {products.length} 个可见款式</span>
-        <span>价格与库存以京东为准</span>
+        <span>正版潮玩手办精选</span>
+        <span className="announcement-center">203 个商品合集 · {products.length} 件独立商品</span>
+        <span>按 IP · 角色 · 款式分类</span>
       </div>
 
       <header className="site-header">
@@ -295,11 +291,12 @@ export default function Home() {
           <a href="#catalog">按 IP 选购</a>
           <button onClick={() => browseCategory("手办")}>手办</button>
           <button onClick={() => browseCategory("拼装模型")}>拼装模型</button>
-          <a href={JD_STORE_URL} target="_blank" rel="noreferrer">京东原店 ↗</a>
+          <a href="#brands">品牌</a>
         </nav>
         <div className="header-actions">
           <button onClick={() => setSearchOpen(true)} aria-label="搜索商品">搜索</button>
           <button className="favorite-header" onClick={() => setToast(`已收藏 ${favorites.length} 个款式`)} aria-label={`收藏 ${favorites.length} 件`}>收藏 <span>{favorites.length}</span></button>
+          <button onClick={() => setToast(`购物袋中有 ${cart.length} 件商品`)} aria-label={`购物袋 ${cart.length} 件`}>购物袋 <span>{cart.length}</span></button>
         </div>
       </header>
 
@@ -307,28 +304,28 @@ export default function Home() {
         <div className="hero-copy">
           <p className="eyebrow">AUTHENTIC FIGURE ARCHIVE</p>
           <h1>按作品，找到你爱的角色。</h1>
-          <p className="hero-description">京东店铺商品已完整整理为<br />IP、角色、款式三级目录。</p>
+          <p className="hero-description">916 件正版潮玩手办，完整整理为<br />IP、角色、款式三级目录。</p>
           <div className="hero-actions">
             <button className="primary-button" onClick={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}>开始选购 <span>→</span></button>
-            <a href={JD_STORE_URL} target="_blank" rel="noreferrer">查看京东原店 <span>↗</span></a>
+            <a href="#new-arrivals">浏览全部商品 <span>↘</span></a>
           </div>
-          <div className="hero-footnote"><span>LIVE</span> 商品价格与库存请以京东详情页为准</div>
+          <div className="hero-footnote"><span>916</span> 全部款式已进入独立店铺目录</div>
         </div>
         <div className="hero-media">
           <img src={heroProduct.image} alt={heroProduct.title} />
           <div className="hero-product-card">
-            <div><span>JD STORE PICK</span><strong>{heroProduct.variant}</strong></div>
-            <div className="hero-price">实时价</div>
-            <a href={heroProduct.url} target="_blank" rel="noreferrer" aria-label="查看京东商品">↗</a>
+            <div><span>ORIGI SELECTION</span><strong>{heroProduct.variant}</strong></div>
+            <div className="hero-price">正版精选</div>
+            <button onClick={() => addToCart(heroProduct)} aria-label={`将 ${heroProduct.variant} 加入购物袋`}>＋</button>
           </div>
         </div>
       </section>
 
       <section className="trust-band" aria-label="目录说明">
-        <div><span>203</span><strong>商品合集</strong><small>来自京东店铺全部商品页</small></div>
-        <div><span>{products.length}</span><strong>可见款式</strong><small>包含商品缩略款式</small></div>
+        <div><span>203</span><strong>商品合集</strong><small>完整收录系列商品</small></div>
+        <div><span>{products.length}</span><strong>独立商品</strong><small>每个款式单独展示</small></div>
         <div><span>{ipGroups.length}</span><strong>IP 作品</strong><small>自动整理作品归属</small></div>
-        <div><span>↗</span><strong>京东详情</strong><small>每款保留原商品链接</small></div>
+        <div><span>HD</span><strong>高清图片</strong><small>升级 800 × 800 商品图</small></div>
       </section>
 
       <section className="collection-browser" id="catalog">
@@ -366,53 +363,51 @@ export default function Home() {
 
       <section className="product-section" id="new-arrivals">
         <div className="section-heading">
-          <div><p className="eyebrow">JD STORE CATALOG</p><h2>{selectedCharacter === "全部角色" ? (selectedIp === "全部IP" ? "全部商品款式" : `${selectedIp} · 全部角色`) : `${selectedCharacter} · 全部款式`}</h2></div>
-          <p>标题、款式图片和商品链接来自所提供的京东店铺。本站不虚构价格，点击商品可查看京东实时价格和库存。</p>
+          <div><p className="eyebrow">COMPLETE PRODUCT CATALOG</p><h2>{selectedCharacter === "全部角色" ? (selectedIp === "全部IP" ? `全部 ${products.length} 件商品` : `${selectedIp} · 全部角色`) : `${selectedCharacter} · 全部款式`}</h2></div>
+          <p>全部 916 个款式均作为独立商品展示。你可以直接浏览完整目录，也可以按 IP、角色、品类或关键词快速筛选。</p>
         </div>
 
         <div className="product-toolbar">
-          <div className="category-tabs" role="group" aria-label="商品分类">{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => { setCategory(item); setDisplayLimit(36); }}>{item}</button>)}</div>
+          <div className="category-tabs" role="group" aria-label="商品分类">{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>
           <button className="inline-search" onClick={() => setSearchOpen(true)}>搜索商品 <span>⌕</span></button>
         </div>
 
         <div className="product-grid">
-          {displayedProducts.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <article className={`product-card ${index < 2 ? "product-card-featured" : ""}`} key={product.id}>
               <div className="product-image-wrap">
-                <span className="product-badge">京东店铺同款</span>
+                <span className="product-badge">正版精选</span>
                 <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>♡</button>
                 <img src={product.image} alt={`${product.ip} ${product.character} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
-                <a className="quick-add" href={product.url} target="_blank" rel="noreferrer">查看京东商品 <span>↗</span></a>
+                <button className="quick-add" onClick={() => addToCart(product)}>加入购物袋 <span>＋</span></button>
               </div>
               <div className="product-meta">
                 <p>{product.ip} · {product.character} · {product.brand}</p>
-                <div className="product-title-row"><h3>{product.variant}</h3><strong>实时价</strong></div>
-                <p className="product-source-title" title={product.title}>京东商品号 {product.sku} · {product.title}</p>
+                <div className="product-title-row"><h3>{product.variant}</h3><strong>正版</strong></div>
               </div>
             </article>
           ))}
         </div>
 
-        {visibleProducts.length > displayedProducts.length && <div className="load-more"><button onClick={() => setDisplayLimit((current) => current + 36)}>加载更多 <span>{displayedProducts.length} / {visibleProducts.length}</span></button></div>}
-        {visibleProducts.length === 0 && <div className="empty-state"><h3>没有找到相关商品</h3><p>换个关键词，或浏览全部商品。</p><button onClick={() => { setQuery(""); setCategory("全部"); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setDisplayLimit(36); }}>查看全部</button></div>}
+        {visibleProducts.length === 0 && <div className="empty-state"><h3>没有找到相关商品</h3><p>换个关键词，或浏览全部商品。</p><button onClick={() => { setQuery(""); setCategory("全部"); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>查看全部</button></div>}
       </section>
 
       <section className="provenance" id="provenance">
-        <div className="provenance-image"><img src={products.find((item) => item.ip === "葬送的芙莉莲")?.image || heroProduct.image} alt="京东店铺正版手办商品" referrerPolicy="no-referrer" /></div>
+        <div className="provenance-image"><img src={products.find((item) => item.ip === "葬送的芙莉莲")?.image || heroProduct.image} alt="正版潮玩手办商品" referrerPolicy="no-referrer" /></div>
         <div className="provenance-copy">
-          <p className="eyebrow">CATALOG SOURCE</p><h2>真实商品，<br />清楚分类。</h2>
-          <p>当前目录取自你提供的京东店铺公开商品页，已排除“运费差价”等非商品条目。每个款式均保留原商品号和详情链接；成交价格、库存、版本与售后政策以京东商品页为准。</p>
-          <div className="proof-list"><div><span>01</span><strong>真实标题</strong><small>保留京东商品名称</small></div><div><span>02</span><strong>真实图片</strong><small>使用店铺商品图</small></div><div><span>03</span><strong>原页可查</strong><small>直达京东商品详情</small></div></div>
+          <p className="eyebrow">THE COMPLETE ARCHIVE</p><h2>900 多件商品，<br />一间店里看完。</h2>
+          <p>从海贼王、鬼灭之刃、咒术回战，到高达、初音未来和更多热门作品，全部商品已经整理进原界目录。选择 IP 后进入角色，再浏览同一角色的不同造型、版本与尺寸。</p>
+          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>916 件独立商品</small></div><div><span>02</span><strong>高清图像</strong><small>800 × 800 商品图</small></div><div><span>03</span><strong>三级分类</strong><small>IP、角色、款式</small></div></div>
         </div>
       </section>
 
       <section className="brand-section" id="brands"><p className="eyebrow">MAKERS IN CATALOG</p><h2>店铺收录品牌</h2><div className="brand-list" aria-label="品牌列表"><span>BANDAI</span><span>BANPRESTO</span><span>SEGA</span><span>TAITO</span><span>FURYU</span><span>GOOD SMILE</span></div></section>
 
-      <footer><div className="footer-brand"><strong>ORIGI</strong><span>原界 · 正版潮玩手办目录</span></div><div className="footer-links"><a href="#catalog">按 IP 选购</a><a href="#new-arrivals">全部商品</a><a href={JD_STORE_URL} target="_blank" rel="noreferrer">京东原店</a></div><div className="footer-note">© 2026 ORIGI 原界。商品信息来源于所提供的京东店铺公开页面，价格与库存以京东为准。</div></footer>
+      <footer><div className="footer-brand"><strong>ORIGI</strong><span>原界 · 正版潮玩手办目录</span></div><div className="footer-links"><a href="#catalog">按 IP 选购</a><a href="#new-arrivals">全部商品</a><a href="#brands">品牌目录</a></div><div className="footer-note">© 2026 ORIGI 原界。正版潮玩与手办精选店铺。</div></footer>
 
       {menuOpen && <div className="overlay mobile-menu" role="dialog" aria-modal="true" aria-label="移动端菜单"><button className="overlay-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">关闭</button><div className="mobile-menu-brand">ORIGI <span>原界</span></div><nav><button onClick={() => { setMenuOpen(false); document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); }}>按 IP / 角色选购 <span>01</span></button><button onClick={() => browseCategory("手办")}>手办 <span>02</span></button><button onClick={() => browseCategory("拼装模型")}>拼装模型 <span>03</span></button></nav></div>}
 
-      {searchOpen && <div className="overlay search-overlay" role="dialog" aria-modal="true" aria-label="搜索商品"><button className="overlay-close" onClick={() => setSearchOpen(false)} aria-label="关闭搜索">关闭</button><div className="search-panel"><p className="eyebrow">SEARCH THE CATALOG</p><label htmlFor="site-search">想找哪一个角色？</label><div className="search-input-row"><input id="site-search" autoFocus value={query} onChange={(event) => { setQuery(event.target.value); setDisplayLimit(36); }} placeholder="输入角色、IP、品牌或商品号" /><button onClick={() => { setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setDisplayLimit(36); setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button></div><div className="search-suggestions"><span>热门：</span>{["海贼王", "路飞", "咒术回战", "鬼灭之刃", "初音未来"].map((item) => <button key={item} onClick={() => { setQuery(item); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setDisplayLimit(36); }}>{item}</button>)}</div></div></div>}
+      {searchOpen && <div className="overlay search-overlay" role="dialog" aria-modal="true" aria-label="搜索商品"><button className="overlay-close" onClick={() => setSearchOpen(false)} aria-label="关闭搜索">关闭</button><div className="search-panel"><p className="eyebrow">SEARCH THE CATALOG</p><label htmlFor="site-search">想找哪一个角色？</label><div className="search-input-row"><input id="site-search" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入角色、IP、品牌或款式" /><button onClick={() => { setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button></div><div className="search-suggestions"><span>热门：</span>{["海贼王", "路飞", "咒术回战", "鬼灭之刃", "初音未来"].map((item) => <button key={item} onClick={() => { setQuery(item); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>{item}</button>)}</div></div></div>}
 
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
