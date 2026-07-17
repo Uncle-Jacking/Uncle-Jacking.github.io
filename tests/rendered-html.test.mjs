@@ -15,17 +15,16 @@ async function render(path = "/") {
   );
 }
 
-test("renders the ORIGI catalog and commerce entry points", async () => {
+test("renders the customer catalog without internal operations UI", async () => {
   const response = await render("/?ref=test-campaign");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
   assert.match(html, /ORIGI 原界/);
-  assert.match(html, /从种草，到安全支付/);
-  assert.match(html, /优惠码/);
-  assert.match(html, /推广归因/);
-  assert.match(html, /生成可追踪推广链接/);
+  assert.match(html, /先选作品，再选角色/);
+  assert.match(html, /购物袋/);
+  assert.doesNotMatch(html, /从种草，到安全支付|生成可追踪推广链接|推广归因|已按具体 SKU 核验/);
   assert.doesNotMatch(html, /Your site is taking shape|Codex is working/);
 });
 
@@ -53,12 +52,12 @@ test("keeps checkout limited to exact Shopify variants with verified prices", as
   assert.match(commerceSource, /mqzvqg-1b\.myshopify\.com/);
   assert.match(pageSource, /前往安全结算/);
   assert.match(pageSource, /buildShopifyCartPermalink/);
+  assert.doesNotMatch(pageSource, /PROMOTION LINK BUILDER|生成可追踪推广链接|订单推广来源/);
   assert.match(commerceSource, /attributes\[推广来源\]/);
   assert.match(commerceSource, /attributes\[UTM Source\]/);
   assert.match(commerceSource, /attributes\[UTM Medium\]/);
   assert.match(commerceSource, /attributes\[UTM Campaign\]/);
   assert.match(pageSource, /params\.get\("discount"\)/);
-  assert.match(pageSource, /navigator\.clipboard\.writeText\(promotionLink\)/);
 });
 
 test("generates promotion links and carries attribution into Shopify checkout", () => {
