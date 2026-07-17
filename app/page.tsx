@@ -8,7 +8,14 @@ type RawProduct = {
   sku: string;
   title: string;
   image: string;
-  variants: Array<{ label: string; image: string }>;
+  variants: Array<{
+    label: string;
+    image: string;
+    skuId?: string;
+    price?: number;
+    finalPrice?: number;
+    priceStatus?: "verified" | "pending" | "unavailable";
+  }>;
 };
 
 type Product = {
@@ -21,6 +28,9 @@ type Product = {
   ip: string;
   category: "手办" | "拼装模型";
   image: string;
+  price?: number;
+  finalPrice?: number;
+  priceStatus: "verified" | "pending" | "unavailable";
 };
 
 const ipPatterns: Array<[string, RegExp]> = [
@@ -151,6 +161,10 @@ function selectedStyle(title: string) {
   return (tail?.[1] || title.slice(-42)).trim();
 }
 
+function formatPrice(price?: number) {
+  return typeof price === "number" ? `¥${price.toFixed(2)}` : "暂无报价";
+}
+
 function detectCharacter(ip: string, label: string, title: string) {
   const names = [...(characterNames[ip] || [])].sort((a, b) => b.length - a.length);
   const fromLabel = names.find((name) => label.replace(/\s+/g, "").includes(name.replace(/\s+/g, "")));
@@ -180,7 +194,7 @@ const products: Product[] = catalogCollections.flatMap((item) => {
     const variant = (option.label || baseStyle).trim();
     return {
       id: `${item.sku}-${index}`,
-      sku: item.sku,
+      sku: option.skuId || item.sku,
       title: item.title,
       character: detectCharacter(ip, variant, item.title),
       variant,
@@ -188,11 +202,15 @@ const products: Product[] = catalogCollections.flatMap((item) => {
       ip,
       category: /高达|拼装|30MS|境界战机|甲虫机娘/i.test(item.title) ? "拼装模型" : "手办",
       image: option.image || item.image,
+      price: option.price,
+      finalPrice: option.finalPrice,
+      priceStatus: option.priceStatus || "unavailable",
     };
   });
 });
 
 const categories = ["全部", "手办", "拼装模型"] as const;
+const verifiedPriceCount = products.filter((product) => product.priceStatus === "verified").length;
 
 export default function Home() {
   const [category, setCategory] = useState<(typeof categories)[number]>("全部");
@@ -280,7 +298,7 @@ export default function Home() {
     <main>
       <div className="announcement">
         <span>正版潮玩手办精选</span>
-        <span className="announcement-center">203 个商品合集 · {products.length} 件独立商品</span>
+        <span className="announcement-center">203 个商品合集 · {products.length} 件独立商品 · {verifiedPriceCount} 个价格已核验</span>
         <span>按 IP · 角色 · 款式分类</span>
       </div>
 
@@ -315,7 +333,11 @@ export default function Home() {
           <img src={heroProduct.image} alt={heroProduct.title} />
           <div className="hero-product-card">
             <div><span>ORIGI SELECTION</span><strong>{heroProduct.variant}</strong></div>
-            <div className="hero-price">正版精选</div>
+            <div className={`hero-price ${heroProduct.priceStatus !== "verified" ? "price-pending" : ""}`}>
+              {heroProduct.priceStatus === "verified" ? (
+                <><small>{heroProduct.finalPrice ? "到手价" : "当前价"}</small><span>{formatPrice(heroProduct.finalPrice ?? heroProduct.price)}</span>{heroProduct.finalPrice && <del>{formatPrice(heroProduct.price)}</del>}</>
+              ) : "暂无报价"}
+            </div>
             <button onClick={() => addToCart(heroProduct)} aria-label={`将 ${heroProduct.variant} 加入购物袋`}>＋</button>
           </div>
         </div>
@@ -325,7 +347,7 @@ export default function Home() {
         <div><span>203</span><strong>商品合集</strong><small>完整收录系列商品</small></div>
         <div><span>{products.length}</span><strong>独立商品</strong><small>每个款式单独展示</small></div>
         <div><span>{ipGroups.length}</span><strong>IP 作品</strong><small>自动整理作品归属</small></div>
-        <div><span>HD</span><strong>无水印原图</strong><small>原始分辨率商品图片</small></div>
+        <div><span>{verifiedPriceCount}</span><strong>真实价格</strong><small>已按具体 SKU 核验</small></div>
       </section>
 
       <section className="collection-browser" id="catalog">
@@ -364,7 +386,7 @@ export default function Home() {
       <section className="product-section" id="new-arrivals">
         <div className="section-heading">
           <div><p className="eyebrow">COMPLETE PRODUCT CATALOG</p><h2>{selectedCharacter === "全部角色" ? (selectedIp === "全部IP" ? `全部 ${products.length} 件商品` : `${selectedIp} · 全部角色`) : `${selectedCharacter} · 全部款式`}</h2></div>
-          <p>全部 916 个款式均作为独立商品展示。你可以直接浏览完整目录，也可以按 IP、角色、品类或关键词快速筛选。</p>
+          <p>全部 916 个款式均作为独立商品展示。已核验价格按具体 SKU 显示；其余款式将在供应端报价恢复后继续更新，不使用估算价。</p>
         </div>
 
         <div className="product-toolbar">
@@ -376,7 +398,7 @@ export default function Home() {
           {visibleProducts.map((product, index) => (
             <article className={`product-card ${index < 2 ? "product-card-featured" : ""}`} key={product.id}>
               <div className="product-image-wrap">
-                <span className="product-badge">正版精选</span>
+                <span className="product-badge">{product.finalPrice ? "到手价" : "正版精选"}</span>
                 <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>♡</button>
                 <img src={product.image} alt={`${product.ip} ${product.character} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
                 <button className="quick-add" onClick={() => addToCart(product)}>加入购物袋 <span>＋</span></button>
@@ -384,6 +406,14 @@ export default function Home() {
               <div className="product-meta">
                 <p>{product.ip} · {product.character} · {product.brand}</p>
                 <div className="product-title-row"><h3>{product.variant}</h3><strong>正版</strong></div>
+                <div className={`product-price-row ${product.priceStatus !== "verified" ? "price-pending" : ""}`}>
+                  {product.priceStatus === "verified" ? (
+                    <div><strong>{formatPrice(product.finalPrice ?? product.price)}</strong>{product.finalPrice && <del>{formatPrice(product.price)}</del>}</div>
+                  ) : (
+                    <strong>暂无报价</strong>
+                  )}
+                  <small>{product.priceStatus === "verified" ? (product.finalPrice ? "促销到手价" : "当前售价") : (product.priceStatus === "pending" ? "价格更新中" : "暂未取得报价")}</small>
+                </div>
               </div>
             </article>
           ))}
@@ -397,7 +427,7 @@ export default function Home() {
         <div className="provenance-copy">
           <p className="eyebrow">THE COMPLETE ARCHIVE</p><h2>900 多件商品，<br />一间店里看完。</h2>
           <p>从海贼王、鬼灭之刃、咒术回战，到高达、初音未来和更多热门作品，全部商品已经整理进原界目录。选择 IP 后进入角色，再浏览同一角色的不同造型、版本与尺寸。</p>
-          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>916 件独立商品</small></div><div><span>02</span><strong>无水印原图</strong><small>保留原始分辨率</small></div><div><span>03</span><strong>三级分类</strong><small>IP、角色、款式</small></div></div>
+          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>916 件独立商品</small></div><div><span>02</span><strong>无水印原图</strong><small>保留原始分辨率</small></div><div><span>03</span><strong>SKU 价格</strong><small>{verifiedPriceCount} 款已核验</small></div></div>
         </div>
       </section>
 
