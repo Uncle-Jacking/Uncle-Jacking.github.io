@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { buildPromotionLink, buildShopifyCartPermalink, resolveCampaignAttribution } from "../app/commerce.mjs";
 
 async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -24,14 +25,16 @@ test("renders the ORIGI catalog and commerce entry points", async () => {
   assert.match(html, /从种草，到安全支付/);
   assert.match(html, /优惠码/);
   assert.match(html, /推广归因/);
+  assert.match(html, /生成可追踪推广链接/);
   assert.doesNotMatch(html, /Your site is taking shape|Codex is working/);
 });
 
 test("keeps checkout limited to exact Shopify variants with verified prices", async () => {
-  const [catalogText, variantMapText, pageSource] = await Promise.all([
+  const [catalogText, variantMapText, pageSource, commerceSource] = await Promise.all([
     readFile(new URL("../app/jd-products.json", import.meta.url), "utf8"),
     readFile(new URL("../app/shopify-variants.json", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/commerce.mjs", import.meta.url), "utf8"),
   ]);
   const catalog = JSON.parse(catalogText);
   const variantMap = JSON.parse(variantMapText);
@@ -47,9 +50,47 @@ test("keeps checkout limited to exact Shopify variants with verified prices", as
     assert.match(shopifyVariantId, /^\d+$/);
   }
 
-  assert.match(pageSource, /mqzvqg-1b\.myshopify\.com/);
+  assert.match(commerceSource, /mqzvqg-1b\.myshopify\.com/);
   assert.match(pageSource, /前往安全结算/);
-  assert.match(pageSource, /params\.set\("discount", code\)/);
-  assert.match(pageSource, /params\.set\("ref", campaignRef/);
-  assert.match(pageSource, /attributes\[来源\]/);
+  assert.match(pageSource, /buildShopifyCartPermalink/);
+  assert.match(commerceSource, /attributes\[推广来源\]/);
+  assert.match(commerceSource, /attributes\[UTM Source\]/);
+  assert.match(commerceSource, /attributes\[UTM Medium\]/);
+  assert.match(commerceSource, /attributes\[UTM Campaign\]/);
+  assert.match(pageSource, /params\.get\("discount"\)/);
+  assert.match(pageSource, /navigator\.clipboard\.writeText\(promotionLink\)/);
+});
+
+test("generates promotion links and carries attribution into Shopify checkout", () => {
+  const promotionUrl = new URL(buildPromotionLink({
+    source: "小红书 Lucy",
+    medium: "creator",
+    campaign: "暑期 手办",
+    discount: " origi 10 ",
+  }));
+  assert.equal(promotionUrl.origin, "https://uncle-jacking.github.io");
+  assert.equal(promotionUrl.searchParams.get("ref"), "小红书-Lucy");
+  assert.equal(promotionUrl.searchParams.get("utm_source"), "小红书-Lucy");
+  assert.equal(promotionUrl.searchParams.get("utm_medium"), "creator");
+  assert.equal(promotionUrl.searchParams.get("utm_campaign"), "暑期-手办");
+  assert.equal(promotionUrl.searchParams.get("discount"), "ORIGI10");
+
+  const stored = JSON.stringify({ ref: "old", utmSource: "old-source", utmMedium: "affiliate", utmCampaign: "old-campaign" });
+  const attribution = resolveCampaignAttribution("?ref=lucy&utm_source=xhs&utm_medium=creator&utm_campaign=launch", stored);
+  assert.deepEqual(attribution, { ref: "lucy", utmSource: "xhs", utmMedium: "creator", utmCampaign: "launch" });
+  assert.equal(resolveCampaignAttribution("", "legacy-ref").ref, "legacy-ref");
+
+  const checkoutUrl = new URL(buildShopifyCartPermalink([
+    { variantId: "49276602384643", quantity: 2 },
+    { variantId: "49276601893123", quantity: 1 },
+  ], " origi 10 ", attribution));
+  assert.equal(checkoutUrl.origin, "https://mqzvqg-1b.myshopify.com");
+  assert.equal(checkoutUrl.pathname, "/cart/49276602384643:2,49276601893123:1");
+  assert.equal(checkoutUrl.searchParams.get("discount"), "ORIGI10");
+  assert.equal(checkoutUrl.searchParams.get("ref"), "lucy");
+  assert.equal(checkoutUrl.searchParams.get("attributes[推广来源]"), "lucy");
+  assert.equal(checkoutUrl.searchParams.get("attributes[UTM Source]"), "xhs");
+  assert.equal(checkoutUrl.searchParams.get("attributes[UTM Medium]"), "creator");
+  assert.equal(checkoutUrl.searchParams.get("attributes[UTM Campaign]"), "launch");
+  assert.throws(() => buildShopifyCartPermalink([{ variantId: "bad", quantity: 1 }], "", attribution), /Invalid Shopify variant ID/);
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { buildPromotionLink, buildShopifyCartPermalink, defaultCampaignAttribution, normalizeDiscountCode, resolveCampaignAttribution } from "./commerce.mjs";
 import rawCatalog from "./jd-products.json";
 import rawShopifyVariants from "./shopify-variants.json";
 
@@ -38,6 +39,13 @@ type Product = {
 type CartEntry = {
   id: string;
   quantity: number;
+};
+
+type CampaignAttribution = {
+  ref: string;
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
 };
 
 const ipPatterns: Array<[string, RegExp]> = [
@@ -193,7 +201,6 @@ function detectCharacter(ip: string, label: string, title: string) {
 
 const catalogCollections = (rawCatalog as RawProduct[]).filter((item) => !/^运费差价/.test(item.title));
 const shopifyVariants = rawShopifyVariants as Record<string, string>;
-const shopifyCheckoutOrigin = "https://mqzvqg-1b.myshopify.com";
 
 const products: Product[] = catalogCollections.flatMap((item) => {
   const ip = detectIp(item.title);
@@ -247,7 +254,12 @@ export default function Home() {
   const [storageReady, setStorageReady] = useState(false);
   const [toast, setToast] = useState("");
   const [discountCode, setDiscountCode] = useState("");
-  const [campaignRef, setCampaignRef] = useState("origi-storefront");
+  const [campaignAttribution, setCampaignAttribution] = useState<CampaignAttribution>(() => ({ ...defaultCampaignAttribution }));
+  const [promotionToolOpen, setPromotionToolOpen] = useState(false);
+  const [promotionSource, setPromotionSource] = useState("xiaohongshu");
+  const [promotionMedium, setPromotionMedium] = useState("creator");
+  const [promotionCampaign, setPromotionCampaign] = useState("figure-launch");
+  const [promotionDiscount, setPromotionDiscount] = useState("");
 
   const ipGroups = useMemo(() => {
     return Array.from(new Set(products.map((product) => product.ip))).map((ip) => {
@@ -308,17 +320,19 @@ export default function Home() {
   const cartHasPricedItems = cartLines.some((entry) => entry.product.priceStatus === "verified");
   const cartHasUnsyncedItems = cartLines.some((entry) => !isShoppable(entry.product));
   const checkoutLines = cartLines.filter((entry) => isShoppable(entry.product));
+  const promotionLink = useMemo(() => buildPromotionLink({ source: promotionSource, medium: promotionMedium, campaign: promotionCampaign, discount: promotionDiscount }), [promotionCampaign, promotionDiscount, promotionMedium, promotionSource]);
 
   useEffect(() => {
     try {
       const storedFavorites = JSON.parse(window.localStorage.getItem(favoritesStorageKey) || "[]");
       const storedCart = JSON.parse(window.localStorage.getItem(cartStorageKey) || "[]");
       const params = new URLSearchParams(window.location.search);
-      const incomingCampaign = params.get("ref") || params.get("utm_campaign") || params.get("utm_source");
-      const storedCampaign = window.localStorage.getItem(campaignStorageKey);
-      const nextCampaign = (incomingCampaign || storedCampaign || "origi-storefront").slice(0, 80);
-      setCampaignRef(nextCampaign);
-      window.localStorage.setItem(campaignStorageKey, nextCampaign);
+      const nextAttribution = resolveCampaignAttribution(window.location.search, window.localStorage.getItem(campaignStorageKey) || "");
+      setCampaignAttribution(nextAttribution);
+      window.localStorage.setItem(campaignStorageKey, JSON.stringify(nextAttribution));
+
+      const incomingDiscount = normalizeDiscountCode(params.get("discount"));
+      if (incomingDiscount) setDiscountCode(incomingDiscount);
 
       if (Array.isArray(storedFavorites)) {
         setFavorites(Array.from(new Set(storedFavorites.filter((id): id is string => typeof id === "string" && productById.has(id)))));
@@ -413,13 +427,21 @@ export default function Home() {
       return;
     }
 
-    const lines = checkoutLines.map(({ product, quantity }) => `${product.shopifyVariantId}:${quantity}`).join(",");
-    const params = new URLSearchParams();
-    const code = discountCode.trim().replace(/\s+/g, "").slice(0, 64);
-    if (code) params.set("discount", code);
-    params.set("ref", campaignRef || "origi-storefront");
-    params.set("attributes[来源]", campaignRef || "origi-storefront");
-    window.location.assign(`${shopifyCheckoutOrigin}/cart/${lines}?${params.toString()}`);
+    const checkoutUrl = buildShopifyCartPermalink(
+      checkoutLines.map(({ product, quantity }) => ({ variantId: product.shopifyVariantId || "", quantity })),
+      discountCode,
+      campaignAttribution,
+    );
+    window.location.assign(checkoutUrl);
+  }
+
+  async function copyPromotionLink() {
+    try {
+      await navigator.clipboard.writeText(promotionLink);
+      setToast("推广链接已复制，可直接发给渠道或达人");
+    } catch {
+      setToast("复制失败，请手动选中推广链接");
+    }
   }
 
   function updateCartQuantity(id: string, change: number) {
@@ -523,12 +545,25 @@ export default function Home() {
       </section>
 
       <section className="commerce-band" id="promotion" aria-label="购买与推广服务">
-        <div className="commerce-heading"><p className="eyebrow">SECURE CHECKOUT · CAMPAIGN READY</p><h2>从种草，到安全支付。</h2><p>已同步到交易后台的 {shoppableProductCount} 件商品支持正式购物袋与安全结算；优惠码和推广来源会自动随订单记录。</p></div>
+        <div className="commerce-heading"><p className="eyebrow">SECURE CHECKOUT · CAMPAIGN READY</p><h2>从种草，到安全支付。</h2><p className="commerce-description">已同步到交易后台的 {shoppableProductCount} 件商品支持正式购物袋与安全结算；优惠码和推广来源会自动随订单记录。</p><button className="promotion-tool-toggle" aria-expanded={promotionToolOpen} onClick={() => setPromotionToolOpen((current) => !current)}>{promotionToolOpen ? "收起推广工具" : "生成可追踪推广链接"} <span>↗</span></button></div>
         <div className="commerce-features">
           <article><span>01</span><strong>安全结算</strong><p>收货信息、配送方式和付款由 Shopify Checkout 统一处理。</p></article>
           <article><span>02</span><strong>优惠码承接</strong><p>顾客可在购物袋填写活动码，结算时自动带入并校验。</p></article>
           <article><span>03</span><strong>推广归因</strong><p>支持 ref 与 UTM 活动链接，订单后台可查看推广来源。</p></article>
         </div>
+        {promotionToolOpen && (
+          <div className="campaign-builder" aria-label="推广链接生成工具">
+            <div className="campaign-builder-heading"><div><p className="eyebrow">PROMOTION LINK BUILDER</p><h3>配置一次，复制即投放。</h3></div><p>链接会携带渠道、媒介、活动名和可选优惠码；顾客完成结算后，这些信息会随订单写入 Shopify。</p></div>
+            <div className="campaign-fields">
+              <label><span>渠道 / 达人代码</span><input value={promotionSource} onChange={(event) => setPromotionSource(event.target.value)} placeholder="例如 xiaohongshu-lucy" /></label>
+              <label><span>推广媒介</span><input value={promotionMedium} onChange={(event) => setPromotionMedium(event.target.value)} placeholder="例如 creator" /></label>
+              <label><span>活动名称</span><input value={promotionCampaign} onChange={(event) => setPromotionCampaign(event.target.value)} placeholder="例如 summer-figure" /></label>
+              <label><span>优惠码（可选）</span><input value={promotionDiscount} onChange={(event) => setPromotionDiscount(event.target.value)} placeholder="例如 ORIGI10" /></label>
+            </div>
+            <div className="campaign-link-row"><div><span>可追踪推广链接</span><code>{promotionLink}</code></div><button onClick={copyPromotionLink}>复制链接</button></div>
+            <p className="campaign-current">本次访问归因：<strong>{campaignAttribution.ref}</strong><span>{campaignAttribution.utmSource} / {campaignAttribution.utmMedium} / {campaignAttribution.utmCampaign}</span></p>
+          </div>
+        )}
       </section>
 
       <section className="collection-browser" id="catalog">
@@ -679,6 +714,7 @@ export default function Home() {
               <div className="cart-summary">
                 <div><span>商品合计{cartHasUnpricedItems ? "（已报价）" : ""}</span><strong>{cartHasPricedItems ? formatPrice(cartSubtotal) : "暂无报价"}</strong></div>
                 <small>{cartHasUnsyncedItems ? "购物袋中有商品尚不能结算，请先移除后再付款。" : "结算时将再次核对库存、优惠与最终金额。"}</small>
+                <div className="checkout-attribution"><span>订单推广来源</span><strong>{campaignAttribution.ref}</strong></div>
                 <label className="discount-field"><span>优惠码</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value)} placeholder="有活动码可在此填写" autoComplete="off" /></label>
                 <button className="checkout-button" onClick={proceedToCheckout} disabled={!checkoutLines.length || cartHasUnsyncedItems}><span>前往安全结算</span><span>→</span></button>
                 <p className="checkout-note">由 Shopify Checkout 提供订单与支付安全保障</p>
