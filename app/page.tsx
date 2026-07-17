@@ -473,12 +473,6 @@ export default function Home() {
 
   return (
     <main>
-      <div className="announcement">
-        <span>正版潮玩手办精选</span>
-        <span className="announcement-center">203 个商品合集 · {products.length} 件独立商品 · {verifiedPriceCount} 个价格已核验</span>
-        <span>按 IP · 角色 · 款式分类</span>
-      </div>
-
       <header className="site-header">
         <button className="mobile-menu-trigger" onClick={() => setMenuOpen(true)} aria-label="打开菜单">菜单</button>
         <a className="brand" href="#top" aria-label="ORIGI 原界首页"><span className="brand-mark">ORIGI</span><span className="brand-cn">原界</span></a>
