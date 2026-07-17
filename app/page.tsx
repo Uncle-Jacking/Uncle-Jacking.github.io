@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import rawCatalog from "./jd-products.json";
+import rawShopifyVariants from "./shopify-variants.json";
 
 type RawProduct = {
   id: number;
@@ -31,6 +32,7 @@ type Product = {
   price?: number;
   finalPrice?: number;
   priceStatus: "verified" | "pending" | "unavailable";
+  shopifyVariantId?: string;
 };
 
 type CartEntry = {
@@ -190,6 +192,8 @@ function detectCharacter(ip: string, label: string, title: string) {
 }
 
 const catalogCollections = (rawCatalog as RawProduct[]).filter((item) => !/^运费差价/.test(item.title));
+const shopifyVariants = rawShopifyVariants as Record<string, string>;
+const shopifyCheckoutOrigin = "https://mqzvqg-1b.myshopify.com";
 
 const products: Product[] = catalogCollections.flatMap((item) => {
   const ip = detectIp(item.title);
@@ -210,15 +214,22 @@ const products: Product[] = catalogCollections.flatMap((item) => {
       price: option.price,
       finalPrice: option.finalPrice,
       priceStatus: option.priceStatus || "unavailable",
+      shopifyVariantId: shopifyVariants[option.skuId || item.sku],
     };
   });
 });
 
 const categories = ["全部", "手办", "拼装模型"] as const;
 const verifiedPriceCount = products.filter((product) => product.priceStatus === "verified").length;
+const shoppableProductCount = products.filter((product) => product.priceStatus === "verified" && product.shopifyVariantId).length;
 const productById = new Map(products.map((product) => [product.id, product]));
 const favoritesStorageKey = "origi-favorites-v1";
 const cartStorageKey = "origi-cart-v1";
+const campaignStorageKey = "origi-campaign-ref-v1";
+
+function isShoppable(product: Product) {
+  return product.priceStatus === "verified" && Boolean(product.shopifyVariantId);
+}
 
 export default function Home() {
   const [category, setCategory] = useState<(typeof categories)[number]>("全部");
@@ -235,6 +246,8 @@ export default function Home() {
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [storageReady, setStorageReady] = useState(false);
   const [toast, setToast] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [campaignRef, setCampaignRef] = useState("origi-storefront");
 
   const ipGroups = useMemo(() => {
     return Array.from(new Set(products.map((product) => product.ip))).map((ip) => {
@@ -277,7 +290,7 @@ export default function Home() {
     });
   }, [category, query, selectedCharacter, selectedIp]);
 
-  const heroProduct = products[0];
+  const heroProduct = products.find(isShoppable) || products[0];
 
   const favoriteProducts = useMemo(() => favorites.flatMap((id) => {
     const product = productById.get(id);
@@ -293,11 +306,19 @@ export default function Home() {
   const cartSubtotal = cartLines.reduce((total, entry) => total + (entry.product.finalPrice ?? entry.product.price ?? 0) * entry.quantity, 0);
   const cartHasUnpricedItems = cartLines.some((entry) => entry.product.priceStatus !== "verified");
   const cartHasPricedItems = cartLines.some((entry) => entry.product.priceStatus === "verified");
+  const cartHasUnsyncedItems = cartLines.some((entry) => !isShoppable(entry.product));
+  const checkoutLines = cartLines.filter((entry) => isShoppable(entry.product));
 
   useEffect(() => {
     try {
       const storedFavorites = JSON.parse(window.localStorage.getItem(favoritesStorageKey) || "[]");
       const storedCart = JSON.parse(window.localStorage.getItem(cartStorageKey) || "[]");
+      const params = new URLSearchParams(window.location.search);
+      const incomingCampaign = params.get("ref") || params.get("utm_campaign") || params.get("utm_source");
+      const storedCampaign = window.localStorage.getItem(campaignStorageKey);
+      const nextCampaign = (incomingCampaign || storedCampaign || "origi-storefront").slice(0, 80);
+      setCampaignRef(nextCampaign);
+      window.localStorage.setItem(campaignStorageKey, nextCampaign);
 
       if (Array.isArray(storedFavorites)) {
         setFavorites(Array.from(new Set(storedFavorites.filter((id): id is string => typeof id === "string" && productById.has(id)))));
@@ -368,6 +389,10 @@ export default function Home() {
   }
 
   function addToCart(product: Product) {
+    if (!isShoppable(product)) {
+      setToast(product.priceStatus === "verified" ? "该款正在同步库存，暂不能结算" : "该款尚未完成报价，暂不能结算");
+      return;
+    }
     setCart((current) => {
       const existing = current.find((entry) => entry.id === product.id);
       if (existing) return current.map((entry) => entry.id === product.id ? { ...entry, quantity: Math.min(99, entry.quantity + 1) } : entry);
@@ -376,6 +401,25 @@ export default function Home() {
     setToast(`${product.variant} 已加入购物袋${product.priceStatus === "verified" ? "" : "，价格待更新"}`);
     setFavoritesOpen(false);
     setCartOpen(true);
+  }
+
+  function proceedToCheckout() {
+    if (!checkoutLines.length) {
+      setToast("购物袋中还没有可结算商品");
+      return;
+    }
+    if (cartHasUnsyncedItems) {
+      setToast("请先移除暂未报价或尚未同步的商品");
+      return;
+    }
+
+    const lines = checkoutLines.map(({ product, quantity }) => `${product.shopifyVariantId}:${quantity}`).join(",");
+    const params = new URLSearchParams();
+    const code = discountCode.trim().replace(/\s+/g, "").slice(0, 64);
+    if (code) params.set("discount", code);
+    params.set("ref", campaignRef || "origi-storefront");
+    params.set("attributes[来源]", campaignRef || "origi-storefront");
+    window.location.assign(`${shopifyCheckoutOrigin}/cart/${lines}?${params.toString()}`);
   }
 
   function updateCartQuantity(id: string, change: number) {
@@ -436,6 +480,7 @@ export default function Home() {
           <a href="#catalog">按 IP 选购</a>
           <button onClick={() => browseCategory("手办")}>手办</button>
           <button onClick={() => browseCategory("拼装模型")}>拼装模型</button>
+          <a href="#promotion">活动</a>
           <a href="#brands">品牌</a>
         </nav>
         <div className="header-actions">
@@ -475,6 +520,15 @@ export default function Home() {
         <div><span>{products.length}</span><strong>独立商品</strong><small>每个款式单独展示</small></div>
         <div><span>{ipGroups.length}</span><strong>IP 作品</strong><small>自动整理作品归属</small></div>
         <div><span>{verifiedPriceCount}</span><strong>真实价格</strong><small>已按具体 SKU 核验</small></div>
+      </section>
+
+      <section className="commerce-band" id="promotion" aria-label="购买与推广服务">
+        <div className="commerce-heading"><p className="eyebrow">SECURE CHECKOUT · CAMPAIGN READY</p><h2>从种草，到安全支付。</h2><p>已同步到交易后台的 {shoppableProductCount} 件商品支持正式购物袋与安全结算；优惠码和推广来源会自动随订单记录。</p></div>
+        <div className="commerce-features">
+          <article><span>01</span><strong>安全结算</strong><p>收货信息、配送方式和付款由 Shopify Checkout 统一处理。</p></article>
+          <article><span>02</span><strong>优惠码承接</strong><p>顾客可在购物袋填写活动码，结算时自动带入并校验。</p></article>
+          <article><span>03</span><strong>推广归因</strong><p>支持 ref 与 UTM 活动链接，订单后台可查看推广来源。</p></article>
+        </div>
       </section>
 
       <section className="collection-browser" id="catalog">
@@ -533,7 +587,7 @@ export default function Home() {
                 <span className="product-badge">正版精选</span>
                 <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-pressed={favorites.includes(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>{favorites.includes(product.id) ? "♥" : "♡"}</button>
                 <img src={product.image} alt={`${product.ip} ${product.character} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
-                <button className="quick-add" onClick={() => addToCart(product)}>加入购物袋 <span>＋</span></button>
+                <button className="quick-add" disabled={!isShoppable(product)} onClick={() => addToCart(product)}>{isShoppable(product) ? "加入购物袋" : (product.priceStatus === "verified" ? "库存同步中" : "报价更新中")} <span>{isShoppable(product) ? "＋" : "·"}</span></button>
               </div>
               <div className="product-meta">
                 <p>{product.ip} · {product.character} · {product.brand}</p>
@@ -624,8 +678,10 @@ export default function Home() {
             {cartLines.length > 0 && (
               <div className="cart-summary">
                 <div><span>商品合计{cartHasUnpricedItems ? "（已报价）" : ""}</span><strong>{cartHasPricedItems ? formatPrice(cartSubtotal) : "暂无报价"}</strong></div>
-                <small>{cartHasUnpricedItems ? "购物袋中有商品暂未报价，合计仅包含已报价商品。" : "购物袋已自动保存，刷新页面不会丢失。"}</small>
-                <button onClick={continueShopping}><span>继续选购</span><span>→</span></button>
+                <small>{cartHasUnsyncedItems ? "购物袋中有商品尚不能结算，请先移除后再付款。" : "结算时将再次核对库存、优惠与最终金额。"}</small>
+                <label className="discount-field"><span>优惠码</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value)} placeholder="有活动码可在此填写" autoComplete="off" /></label>
+                <button className="checkout-button" onClick={proceedToCheckout} disabled={!checkoutLines.length || cartHasUnsyncedItems}><span>前往安全结算</span><span>→</span></button>
+                <p className="checkout-note">由 Shopify Checkout 提供订单与支付安全保障</p>
                 <button className="clear-cart" onClick={() => { setCart([]); setToast("购物袋已清空"); }}>清空购物袋</button>
               </div>
             )}

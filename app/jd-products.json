@@ -312,19 +312,22 @@
         "label": "",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/398339/9/3283/2818809/699dc540Ff055b8fc/00835dc5dc53be59.png",
         "skuId": "10210857835885",
-        "priceStatus": "pending"
+        "price": 309,
+        "priceStatus": "verified"
       },
       {
         "label": "【日本进口】绊之装 18 祢豆子 A款-12CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/393885/19/18494/2481464/699dc11bFe0b9276f/00835dc5dc548632.png",
         "skuId": "10210857835857",
-        "priceStatus": "pending"
+        "price": 228,
+        "priceStatus": "verified"
       },
       {
         "label": "【日本进口】鬼杀队 炭治郎 棕色-16CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/397967/27/3928/2644512/699dc40bF51aa1945/00835dc5dc3fbb3f.png",
         "skuId": "10210857835879",
-        "priceStatus": "pending"
+        "price": 268,
+        "priceStatus": "verified"
       },
       {
         "label": "【日本进口】VS 蝴蝶忍-19CM",
@@ -336,7 +339,8 @@
         "label": "【日本进口】绊之装 祢豆子-16CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/394162/2/18306/2670953/699dc407Fe1ce70f7/00835dc5dce383b0.png",
         "skuId": "10210857835881",
-        "priceStatus": "pending"
+        "price": 388,
+        "priceStatus": "verified"
       }
     ]
   },
