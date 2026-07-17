@@ -33,6 +33,11 @@ type Product = {
   priceStatus: "verified" | "pending" | "unavailable";
 };
 
+type CartEntry = {
+  id: string;
+  quantity: number;
+};
+
 const ipPatterns: Array<[string, RegExp]> = [
   ["海贼王", /海贼王|海贼船/],
   ["Re:从零开始的异世界生活", /Re:\s*从零|从零开始|异世界生活|RE0/i],
@@ -211,6 +216,9 @@ const products: Product[] = catalogCollections.flatMap((item) => {
 
 const categories = ["全部", "手办", "拼装模型"] as const;
 const verifiedPriceCount = products.filter((product) => product.priceStatus === "verified").length;
+const productById = new Map(products.map((product) => [product.id, product]));
+const favoritesStorageKey = "origi-favorites-v1";
+const cartStorageKey = "origi-cart-v1";
 
 export default function Home() {
   const [category, setCategory] = useState<(typeof categories)[number]>("全部");
@@ -219,8 +227,11 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [cart, setCart] = useState<string[]>([]);
+  const [cart, setCart] = useState<CartEntry[]>([]);
+  const [storageReady, setStorageReady] = useState(false);
   const [toast, setToast] = useState("");
 
   const ipGroups = useMemo(() => {
@@ -252,10 +263,80 @@ export default function Home() {
 
   const heroProduct = products[0];
 
+  const favoriteProducts = useMemo(() => favorites.flatMap((id) => {
+    const product = productById.get(id);
+    return product ? [product] : [];
+  }), [favorites]);
+
+  const cartLines = useMemo(() => cart.flatMap((entry) => {
+    const product = productById.get(entry.id);
+    return product ? [{ ...entry, product }] : [];
+  }), [cart]);
+
+  const cartItemCount = cart.reduce((total, entry) => total + entry.quantity, 0);
+  const cartSubtotal = cartLines.reduce((total, entry) => total + (entry.product.finalPrice ?? entry.product.price ?? 0) * entry.quantity, 0);
+  const cartHasUnpricedItems = cartLines.some((entry) => entry.product.priceStatus !== "verified");
+  const cartHasPricedItems = cartLines.some((entry) => entry.product.priceStatus === "verified");
+
   useEffect(() => {
-    document.body.style.overflow = searchOpen || menuOpen ? "hidden" : "";
+    try {
+      const storedFavorites = JSON.parse(window.localStorage.getItem(favoritesStorageKey) || "[]");
+      const storedCart = JSON.parse(window.localStorage.getItem(cartStorageKey) || "[]");
+
+      if (Array.isArray(storedFavorites)) {
+        setFavorites(Array.from(new Set(storedFavorites.filter((id): id is string => typeof id === "string" && productById.has(id)))));
+      }
+
+      if (Array.isArray(storedCart)) {
+        setCart(storedCart.flatMap((entry) => {
+          if (!entry || typeof entry.id !== "string" || !productById.has(entry.id)) return [];
+          const quantity = Math.max(1, Math.min(99, Math.floor(Number(entry.quantity) || 1)));
+          return [{ id: entry.id, quantity }];
+        }));
+      }
+    } catch {
+      window.localStorage.removeItem(favoritesStorageKey);
+      window.localStorage.removeItem(cartStorageKey);
+    } finally {
+      setStorageReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    try {
+      window.localStorage.setItem(favoritesStorageKey, JSON.stringify(favorites));
+    } catch {
+      setToast("当前浏览器无法保存收藏");
+    }
+  }, [favorites, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    try {
+      window.localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+    } catch {
+      setToast("当前浏览器无法保存购物袋");
+    }
+  }, [cart, storageReady]);
+
+  useEffect(() => {
+    const panelOpen = searchOpen || menuOpen || favoritesOpen || cartOpen;
+    document.body.style.overflow = panelOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [searchOpen, menuOpen]);
+  }, [cartOpen, favoritesOpen, menuOpen, searchOpen]);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setSearchOpen(false);
+      setMenuOpen(false);
+      setFavoritesOpen(false);
+      setCartOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -264,12 +345,41 @@ export default function Home() {
   }, [toast]);
 
   function toggleFavorite(id: string) {
+    const product = productById.get(id);
+    const removing = favorites.includes(id);
     setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    setToast(product ? `${product.variant} 已${removing ? "取消收藏" : "加入收藏"}` : "收藏已更新");
   }
 
   function addToCart(product: Product) {
-    setCart((current) => current.includes(product.id) ? current : [...current, product.id]);
-    setToast(`${product.variant} 已加入购物袋`);
+    setCart((current) => {
+      const existing = current.find((entry) => entry.id === product.id);
+      if (existing) return current.map((entry) => entry.id === product.id ? { ...entry, quantity: Math.min(99, entry.quantity + 1) } : entry);
+      return [...current, { id: product.id, quantity: 1 }];
+    });
+    setToast(`${product.variant} 已加入购物袋${product.priceStatus === "verified" ? "" : "，价格待更新"}`);
+    setFavoritesOpen(false);
+    setCartOpen(true);
+  }
+
+  function updateCartQuantity(id: string, change: number) {
+    setCart((current) => current.flatMap((entry) => {
+      if (entry.id !== id) return [entry];
+      const quantity = Math.min(99, entry.quantity + change);
+      return quantity > 0 ? [{ ...entry, quantity }] : [];
+    }));
+  }
+
+  function removeFromCart(id: string) {
+    const product = productById.get(id);
+    setCart((current) => current.filter((entry) => entry.id !== id));
+    setToast(product ? `${product.variant} 已移出购物袋` : "商品已移出购物袋");
+  }
+
+  function continueShopping() {
+    setCartOpen(false);
+    setFavoritesOpen(false);
+    window.setTimeout(() => document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
   function browseCategory(nextCategory: (typeof categories)[number]) {
@@ -313,8 +423,8 @@ export default function Home() {
         </nav>
         <div className="header-actions">
           <button onClick={() => setSearchOpen(true)} aria-label="搜索商品">搜索</button>
-          <button className="favorite-header" onClick={() => setToast(`已收藏 ${favorites.length} 个款式`)} aria-label={`收藏 ${favorites.length} 件`}>收藏 <span>{favorites.length}</span></button>
-          <button onClick={() => setToast(`购物袋中有 ${cart.length} 件商品`)} aria-label={`购物袋 ${cart.length} 件`}>购物袋 <span>{cart.length}</span></button>
+          <button className="favorite-header" onClick={() => { setFavoritesOpen(true); setCartOpen(false); }} aria-label={`打开收藏，已收藏 ${favorites.length} 件`}>收藏 <span>{favorites.length}</span></button>
+          <button onClick={() => { setCartOpen(true); setFavoritesOpen(false); }} aria-label={`打开购物袋，共 ${cartItemCount} 件`}>购物袋 <span>{cartItemCount}</span></button>
         </div>
       </header>
 
@@ -399,7 +509,7 @@ export default function Home() {
             <article className={`product-card ${index < 2 ? "product-card-featured" : ""}`} key={product.id}>
               <div className="product-image-wrap">
                 <span className="product-badge">{product.finalPrice ? "到手价" : "正版精选"}</span>
-                <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>♡</button>
+                <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-pressed={favorites.includes(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>{favorites.includes(product.id) ? "♥" : "♡"}</button>
                 <img src={product.image} alt={`${product.ip} ${product.character} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
                 <button className="quick-add" onClick={() => addToCart(product)}>加入购物袋 <span>＋</span></button>
               </div>
@@ -438,6 +548,68 @@ export default function Home() {
       {menuOpen && <div className="overlay mobile-menu" role="dialog" aria-modal="true" aria-label="移动端菜单"><button className="overlay-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">关闭</button><div className="mobile-menu-brand">ORIGI <span>原界</span></div><nav><button onClick={() => { setMenuOpen(false); document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); }}>按 IP / 角色选购 <span>01</span></button><button onClick={() => browseCategory("手办")}>手办 <span>02</span></button><button onClick={() => browseCategory("拼装模型")}>拼装模型 <span>03</span></button></nav></div>}
 
       {searchOpen && <div className="overlay search-overlay" role="dialog" aria-modal="true" aria-label="搜索商品"><button className="overlay-close" onClick={() => setSearchOpen(false)} aria-label="关闭搜索">关闭</button><div className="search-panel"><p className="eyebrow">SEARCH THE CATALOG</p><label htmlFor="site-search">想找哪一个角色？</label><div className="search-input-row"><input id="site-search" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入角色、IP、品牌或款式" /><button onClick={() => { setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button></div><div className="search-suggestions"><span>热门：</span>{["海贼王", "路飞", "咒术回战", "鬼灭之刃", "初音未来"].map((item) => <button key={item} onClick={() => { setQuery(item); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>{item}</button>)}</div></div></div>}
+
+      {favoritesOpen && (
+        <div className="drawer-backdrop" role="presentation" onClick={() => setFavoritesOpen(false)}>
+          <aside className="cart-drawer" role="dialog" aria-modal="true" aria-label="我的收藏" onClick={(event) => event.stopPropagation()}>
+            <div className="drawer-heading"><div><p className="eyebrow">MY FAVORITES</p><h2>我的收藏 <span>{favoriteProducts.length} 件</span></h2></div><button autoFocus onClick={() => setFavoritesOpen(false)}>关闭</button></div>
+            {favoriteProducts.length ? (
+              <div className="cart-items">
+                {favoriteProducts.map((product) => (
+                  <article className="cart-item" key={product.id}>
+                    <img src={product.image} alt={product.variant} referrerPolicy="no-referrer" />
+                    <div className="cart-item-copy">
+                      <small>{product.ip} · {product.character}</small>
+                      <strong>{product.variant}</strong>
+                      <span>{product.priceStatus === "verified" ? formatPrice(product.finalPrice ?? product.price) : "暂无报价"}</span>
+                      <div className="drawer-item-actions"><button onClick={() => addToCart(product)}>加入购物袋</button><button onClick={() => toggleFavorite(product.id)}>取消收藏</button></div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="cart-empty"><strong>还没有收藏商品</strong><p>点击商品图片右上角的爱心，即可在这里找到它。</p><button onClick={continueShopping}>去逛逛</button></div>
+            )}
+            {favoriteProducts.length > 0 && <div className="drawer-footer"><button onClick={continueShopping}>继续选购 <span>→</span></button></div>}
+          </aside>
+        </div>
+      )}
+
+      {cartOpen && (
+        <div className="drawer-backdrop" role="presentation" onClick={() => setCartOpen(false)}>
+          <aside className="cart-drawer" role="dialog" aria-modal="true" aria-label="购物袋" onClick={(event) => event.stopPropagation()}>
+            <div className="drawer-heading"><div><p className="eyebrow">SHOPPING BAG</p><h2>购物袋 <span>{cartItemCount} 件</span></h2></div><button autoFocus onClick={() => setCartOpen(false)}>关闭</button></div>
+            {cartLines.length ? (
+              <div className="cart-items">
+                {cartLines.map(({ product, quantity }) => (
+                  <article className="cart-item" key={product.id}>
+                    <img src={product.image} alt={product.variant} referrerPolicy="no-referrer" />
+                    <div className="cart-item-copy">
+                      <small>{product.ip} · {product.character}</small>
+                      <strong>{product.variant}</strong>
+                      <span>{product.priceStatus === "verified" ? formatPrice(product.finalPrice ?? product.price) : "价格待更新"}</span>
+                      <div className="cart-item-controls">
+                        <div className="quantity" aria-label={`${product.variant} 数量`}><button onClick={() => updateCartQuantity(product.id, -1)} aria-label="减少数量">−</button><span>{quantity}</span><button onClick={() => updateCartQuantity(product.id, 1)} aria-label="增加数量">＋</button></div>
+                        <button className="remove-item" onClick={() => removeFromCart(product.id)}>删除</button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="cart-empty"><strong>购物袋还是空的</strong><p>挑选喜欢的款式，点击“加入购物袋”。</p><button onClick={continueShopping}>开始选购</button></div>
+            )}
+            {cartLines.length > 0 && (
+              <div className="cart-summary">
+                <div><span>商品合计{cartHasUnpricedItems ? "（已报价）" : ""}</span><strong>{cartHasPricedItems ? formatPrice(cartSubtotal) : "暂无报价"}</strong></div>
+                <small>{cartHasUnpricedItems ? "购物袋中有商品暂未报价，合计仅包含已报价商品。" : "购物袋已自动保存，刷新页面不会丢失。"}</small>
+                <button onClick={continueShopping}><span>继续选购</span><span>→</span></button>
+                <button className="clear-cart" onClick={() => { setCart([]); setToast("购物袋已清空"); }}>清空购物袋</button>
+              </div>
+            )}
+          </aside>
+        </div>
+      )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
