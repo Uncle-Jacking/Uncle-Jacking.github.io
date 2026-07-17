@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { buildShopifyCartPermalink, defaultCampaignAttribution, normalizeDiscountCode, resolveCampaignAttribution } from "./commerce.mjs";
 import rawCatalog from "./jd-products.json";
 import rawShopifyVariants from "./shopify-variants.json";
@@ -155,6 +155,18 @@ const characterNames: Record<string, string[]> = {
   "莉可丽丝": ["锦木千束", "井之上泷奈"],
 };
 
+const featuredIpNames = ["海贼王", "鬼灭之刃", "Re:从零开始的异世界生活", "七龙珠", "咒术回战", "宝可梦", "魔女之旅", "新世纪福音战士"];
+const ipAccentColors: Record<string, string> = {
+  "海贼王": "#f0643f",
+  "鬼灭之刃": "#20b98a",
+  "Re:从零开始的异世界生活": "#7d63ff",
+  "七龙珠": "#f4ab25",
+  "咒术回战": "#398cff",
+  "宝可梦": "#e9c62f",
+  "魔女之旅": "#d95ce5",
+  "新世纪福音战士": "#9b70ff",
+};
+
 function detectIp(title: string) {
   return ipPatterns.find(([, pattern]) => pattern.test(title))?.[0] || "其他作品";
 }
@@ -243,6 +255,7 @@ export default function Home() {
   const [selectedCharacter, setSelectedCharacter] = useState("全部角色");
   const [ipQuery, setIpQuery] = useState("");
   const [allIpsOpen, setAllIpsOpen] = useState(false);
+  const [ipPortalVisible, setIpPortalVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -258,9 +271,19 @@ export default function Home() {
   const ipGroups = useMemo(() => {
     return Array.from(new Set(products.map((product) => product.ip))).map((ip) => {
       const scoped = products.filter((product) => product.ip === ip);
-      return { ip, characterCount: new Set(scoped.map((product) => product.character)).size, styleCount: scoped.length };
+      const characters = Array.from(new Set(scoped.map((product) => product.character)));
+      return { ip, characterCount: characters.length, styleCount: scoped.length, image: scoped[0]?.image || "", characters: characters.slice(0, 5) };
     }).sort((a, b) => b.styleCount - a.styleCount || a.ip.localeCompare(b.ip, "zh-CN"));
   }, []);
+
+  const featuredIpGroups = useMemo(() => {
+    const preferred = featuredIpNames.flatMap((name) => {
+      const group = ipGroups.find((item) => item.ip === name);
+      return group ? [group] : [];
+    });
+    const remaining = ipGroups.filter((group) => !preferred.some((item) => item.ip === group.ip));
+    return [...preferred, ...remaining].slice(0, 8);
+  }, [ipGroups]);
 
   const charactersForIp = useMemo(() => {
     if (selectedIp === "全部IP") return [];
@@ -388,6 +411,21 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    const target = document.getElementById("catalog");
+    if (!target || typeof IntersectionObserver === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIpPortalVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      setIpPortalVisible(true);
+      observer.disconnect();
+    }, { threshold: 0.08 });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
   function toggleFavorite(id: string) {
     const product = productById.get(id);
     const removing = favorites.includes(id);
@@ -471,6 +509,11 @@ export default function Home() {
     document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function chooseIpCard(nextIp: string) {
+    chooseIp(nextIp);
+    window.setTimeout(() => document.getElementById("character-archive")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
   function moveHeroStage(event: ReactPointerEvent<HTMLElement>) {
     if (event.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -483,6 +526,13 @@ export default function Home() {
   function resetHeroStage(event: ReactPointerEvent<HTMLElement>) {
     event.currentTarget.style.setProperty("--hero-shift-x", "0px");
     event.currentTarget.style.setProperty("--hero-shift-y", "0px");
+  }
+
+  function movePortalGlow(event: ReactPointerEvent<HTMLElement>) {
+    if (event.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--portal-glow-x", `${(event.clientX - bounds.left - bounds.width / 2) * 0.08}px`);
+    event.currentTarget.style.setProperty("--portal-glow-y", `${(event.clientY - bounds.top - bounds.height / 2) * 0.04}px`);
   }
 
   return (
@@ -541,42 +591,51 @@ export default function Home() {
         <div className="hero-marquee" aria-hidden="true"><div>{Array.from({ length: 6 }, (_, index) => <span key={index}>ART TOY · SCALE FIGURE · COLLECTIBLE · NEW DROP ·</span>)}</div></div>
       </section>
 
-      <section className="collection-browser" id="catalog">
+      <section className={`collection-browser ${ipPortalVisible ? "is-visible" : ""}`} id="catalog" onPointerMove={movePortalGlow}>
+        <div className="portal-glow" aria-hidden="true"></div>
         <div className="collection-heading">
-          <div><p className="eyebrow">IP → CHARACTER → STYLE</p><h2>先选作品，再选角色。</h2></div>
-          <p>例如选择「海贼王」，再选择路飞、索隆或娜美，即可集中查看该角色在店铺里的多个实际款式。</p>
+          <div><p className="eyebrow">IP DIRECTORY / CHOOSE YOUR WORLD</p><h2>先选 IP，<br />再选角色。</h2></div>
+          <p>不是在一堆商品里盲目搜索。先进入热爱的世界，再锁定想收藏的角色，查看同一角色的不同造型与版本。</p>
         </div>
 
-        <div className="catalog-steps" aria-label="商品分类层级">
-          <span className="active"><b>01</b> 选择 IP</span>
-          <span className={selectedIp !== "全部IP" ? "active" : ""}><b>02</b> 选择角色</span>
-          <span className={selectedCharacter !== "全部角色" ? "active" : ""}><b>03</b> 浏览款式</span>
+        <div className="ip-showcase" role="group" aria-label="热门 IP 作品">
+          {featuredIpGroups.map((group, index) => (
+            <article className={`ip-showcase-card ${selectedIp === group.ip ? "active" : ""}`} key={group.ip} style={{ "--ip-accent": ipAccentColors[group.ip] || "#f0643f", "--ip-delay": `${index * 70}ms` } as CSSProperties}>
+              <button onClick={() => chooseIpCard(group.ip)} aria-label={`进入 ${group.ip}，选择角色`}>
+                <div className="ip-showcase-media"><img src={group.image} alt="" loading={index > 3 ? "lazy" : "eager"} referrerPolicy="no-referrer" /><span aria-hidden="true"></span></div>
+                <div className="ip-showcase-copy"><small>0{index + 1}</small><h3>{group.ip}</h3><p>{group.characters.join(" · ")}</p><i aria-hidden="true">↗</i></div>
+              </button>
+            </article>
+          ))}
         </div>
 
-        <div className="catalog-label-row"><strong>IP 作品馆</strong><small>{ipGroups.length} 个作品系列 · 可搜索或展开全部</small></div>
-        <div className="ip-browser-toolbar">
+        <div className="ip-directory" id="all-ip-directory">
+          <div className="catalog-label-row"><strong>全部 IP 索引</strong><small>{ipGroups.length} 个作品系列</small></div>
+          <div className="ip-browser-toolbar">
           <label className="ip-search"><span>搜索作品</span><input type="search" value={ipQuery} onChange={(event) => setIpQuery(event.target.value)} placeholder="例如：海贼王、咒术回战" /></label>
           <div className="ip-view-control"><small>显示 {displayedIpGroups.length + 1} / {ipGroups.length + 1}</small><button aria-expanded={allIpsOpen} onClick={() => ipQuery ? setIpQuery("") : setAllIpsOpen((current) => !current)}>{ipQuery ? "清除搜索" : (allIpsOpen ? "收起热门作品" : `查看全部 ${ipGroups.length} 个 IP`)}</button></div>
-        </div>
-        <div className={`ip-selector ${allIpsOpen || ipQuery ? "expanded" : ""}`} role="group" aria-label="选择IP作品">
-          <button className={selectedIp === "全部IP" ? "active" : ""} onClick={() => chooseIp("全部IP")}><span>全部 IP</span><small>{products.length} 个款式</small></button>
-          {displayedIpGroups.map((group) => <button key={group.ip} className={selectedIp === group.ip ? "active" : ""} onClick={() => chooseIp(group.ip)}><span>{group.ip}</span><small>{group.characterCount} 个角色 · {group.styleCount} 款</small></button>)}
-        </div>
-        {ipQuery && matchingIpGroups.length === 0 && <div className="ip-empty">没有找到“{ipQuery}”，试试角色名或其他作品名称。</div>}
-
-        <div className="catalog-label-row"><strong>角色档案</strong><small>{selectedIp === "全部IP" ? "选择一个 IP 后查看角色" : `${selectedIp} · ${charactersForIp.length} 个角色`}</small></div>
-        <div className="character-selector" role="group" aria-label="选择角色">
-          {selectedIp === "全部IP" ? (
-            <button className="active" onClick={() => chooseCharacter("全部角色")}><span className="character-monogram">ALL</span><span><strong>全部角色</strong><small>{products.length} 款</small></span></button>
-          ) : (
-            <>
-              <button className={selectedCharacter === "全部角色" ? "active" : ""} onClick={() => chooseCharacter("全部角色")}><span className="character-monogram">ALL</span><span><strong>全部角色</strong><small>{products.filter((product) => product.ip === selectedIp).length} 款</small></span></button>
-              {charactersForIp.map((item) => <button key={item.character} className={selectedCharacter === item.character ? "active" : ""} onClick={() => chooseCharacter(item.character)}><img src={item.image} alt="" loading="lazy" /><span><strong>{item.character}</strong><small>{item.styleCount} 个款式</small></span></button>)}
-            </>
-          )}
+          </div>
+          <div className={`ip-selector ${allIpsOpen || ipQuery ? "expanded" : ""}`} role="group" aria-label="选择IP作品">
+            <button className={selectedIp === "全部IP" ? "active" : ""} onClick={() => chooseIp("全部IP")}><span>全部 IP</span><small>{products.length} 款</small></button>
+            {displayedIpGroups.map((group) => <button key={group.ip} className={selectedIp === group.ip ? "active" : ""} onClick={() => chooseIp(group.ip)}><span>{group.ip}</span><small>{group.styleCount} 款</small></button>)}
+          </div>
+          {ipQuery && matchingIpGroups.length === 0 && <div className="ip-empty">没有找到“{ipQuery}”，试试其他作品名称。</div>}
         </div>
 
-        <div className="catalog-path" aria-live="polite"><span>当前位置</span><strong>{selectedIp}</strong><i>→</i><strong>{selectedCharacter}</strong><i>→</i><b>{visibleProducts.length} 个款式</b></div>
+        <div className="character-archive" id="character-archive">
+          <div className="catalog-label-row"><strong>{selectedIp === "全部IP" ? "角色档案" : selectedIp}</strong><small>{selectedIp === "全部IP" ? "先选择一个 IP 作品" : `${charactersForIp.length} 个角色 · 继续选择角色`}</small></div>
+          <div className="character-selector" role="group" aria-label="选择角色">
+            {selectedIp === "全部IP" ? (
+              <button className="active" onClick={() => chooseCharacter("全部角色")}><span className="character-monogram">IP</span><span><strong>请先选择作品</strong><small>从上方热门卡片或全部索引进入</small></span></button>
+            ) : (
+              <>
+                <button className={selectedCharacter === "全部角色" ? "active" : ""} onClick={() => chooseCharacter("全部角色")}><span className="character-monogram">ALL</span><span><strong>全部角色</strong><small>{products.filter((product) => product.ip === selectedIp).length} 款</small></span></button>
+                {charactersForIp.map((item) => <button key={item.character} className={selectedCharacter === item.character ? "active" : ""} onClick={() => chooseCharacter(item.character)}><img src={item.image} alt="" loading="lazy" /><span><strong>{item.character}</strong><small>{item.styleCount} 个款式</small></span></button>)}
+              </>
+            )}
+          </div>
+          <div className="catalog-path" aria-live="polite"><span>当前位置</span><strong>{selectedIp}</strong><i>→</i><strong>{selectedCharacter}</strong><i>→</i><b>{visibleProducts.length} 个款式</b></div>
+        </div>
       </section>
 
       <section className="product-section" id="new-arrivals">
