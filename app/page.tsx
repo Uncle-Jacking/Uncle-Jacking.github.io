@@ -530,7 +530,7 @@ export default function Home() {
           {visibleProducts.map((product, index) => (
             <article className={`product-card ${index < 2 ? "product-card-featured" : ""}`} key={product.id}>
               <div className="product-image-wrap">
-                <span className="product-badge">{product.finalPrice ? "到手价" : "正版精选"}</span>
+                <span className="product-badge">正版精选</span>
                 <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-pressed={favorites.includes(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>{favorites.includes(product.id) ? "♥" : "♡"}</button>
                 <img src={product.image} alt={`${product.ip} ${product.character} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
                 <button className="quick-add" onClick={() => addToCart(product)}>加入购物袋 <span>＋</span></button>
