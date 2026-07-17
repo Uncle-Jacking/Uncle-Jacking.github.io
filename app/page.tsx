@@ -224,6 +224,8 @@ export default function Home() {
   const [category, setCategory] = useState<(typeof categories)[number]>("全部");
   const [selectedIp, setSelectedIp] = useState("全部IP");
   const [selectedCharacter, setSelectedCharacter] = useState("全部角色");
+  const [ipQuery, setIpQuery] = useState("");
+  const [allIpsOpen, setAllIpsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -249,6 +251,20 @@ export default function Home() {
       return { character, styleCount: styles.length, image: styles[0].image };
     }).sort((a, b) => b.styleCount - a.styleCount || a.character.localeCompare(b.character, "zh-CN"));
   }, [selectedIp]);
+
+  const matchingIpGroups = useMemo(() => {
+    const normalized = ipQuery.trim().toLowerCase();
+    if (!normalized) return ipGroups;
+    return ipGroups.filter((group) => group.ip.toLowerCase().includes(normalized));
+  }, [ipGroups, ipQuery]);
+
+  const displayedIpGroups = useMemo(() => {
+    if (ipQuery.trim() || allIpsOpen) return matchingIpGroups;
+    const popular = matchingIpGroups.slice(0, 11);
+    if (selectedIp === "全部IP" || popular.some((group) => group.ip === selectedIp)) return popular;
+    const selected = matchingIpGroups.find((group) => group.ip === selectedIp);
+    return selected ? [...popular.slice(0, 10), selected] : popular;
+  }, [allIpsOpen, ipQuery, matchingIpGroups, selectedIp]);
 
   const visibleProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -395,6 +411,7 @@ export default function Home() {
     setSelectedCharacter("全部角色");
     setCategory("全部");
     setQuery("");
+    setIpQuery("");
   }
 
   function chooseCharacter(character: string) {
@@ -472,11 +489,16 @@ export default function Home() {
           <span className={selectedCharacter !== "全部角色" ? "active" : ""}><b>03</b> 浏览款式</span>
         </div>
 
-        <div className="catalog-label-row"><strong>IP 作品馆</strong><small>{ipGroups.length} 个作品系列</small></div>
-        <div className="ip-selector" role="group" aria-label="选择IP作品">
-          <button className={selectedIp === "全部IP" ? "active" : ""} onClick={() => chooseIp("全部IP")}><span>全部 IP</span><small>{products.length} 个款式</small></button>
-          {ipGroups.map((group) => <button key={group.ip} className={selectedIp === group.ip ? "active" : ""} onClick={() => chooseIp(group.ip)}><span>{group.ip}</span><small>{group.characterCount} 个角色 · {group.styleCount} 款</small></button>)}
+        <div className="catalog-label-row"><strong>IP 作品馆</strong><small>{ipGroups.length} 个作品系列 · 可搜索或展开全部</small></div>
+        <div className="ip-browser-toolbar">
+          <label className="ip-search"><span>搜索作品</span><input type="search" value={ipQuery} onChange={(event) => setIpQuery(event.target.value)} placeholder="例如：海贼王、咒术回战" /></label>
+          <div className="ip-view-control"><small>显示 {displayedIpGroups.length + 1} / {ipGroups.length + 1}</small><button aria-expanded={allIpsOpen} onClick={() => ipQuery ? setIpQuery("") : setAllIpsOpen((current) => !current)}>{ipQuery ? "清除搜索" : (allIpsOpen ? "收起热门作品" : `查看全部 ${ipGroups.length} 个 IP`)}</button></div>
         </div>
+        <div className={`ip-selector ${allIpsOpen || ipQuery ? "expanded" : ""}`} role="group" aria-label="选择IP作品">
+          <button className={selectedIp === "全部IP" ? "active" : ""} onClick={() => chooseIp("全部IP")}><span>全部 IP</span><small>{products.length} 个款式</small></button>
+          {displayedIpGroups.map((group) => <button key={group.ip} className={selectedIp === group.ip ? "active" : ""} onClick={() => chooseIp(group.ip)}><span>{group.ip}</span><small>{group.characterCount} 个角色 · {group.styleCount} 款</small></button>)}
+        </div>
+        {ipQuery && matchingIpGroups.length === 0 && <div className="ip-empty">没有找到“{ipQuery}”，试试角色名或其他作品名称。</div>}
 
         <div className="catalog-label-row"><strong>角色档案</strong><small>{selectedIp === "全部IP" ? "选择一个 IP 后查看角色" : `${selectedIp} · ${charactersForIp.length} 个角色`}</small></div>
         <div className="character-selector" role="group" aria-label="选择角色">
