@@ -22,6 +22,8 @@ test("renders the customer catalog without internal operations UI", async () => 
 
   const html = await response.text();
   assert.match(html, /ORIGI 原界/);
+  assert.match(html, /让角色，/);
+  assert.match(html, /ART TOY · SCALE FIGURE/);
   assert.match(html, /先选作品，再选角色/);
   assert.match(html, /购物袋/);
   assert.doesNotMatch(html, /从种草，到安全支付|生成可追踪推广链接|推广归因|已按具体 SKU 核验|203 个商品合集|按 IP · 角色 · 款式分类/);

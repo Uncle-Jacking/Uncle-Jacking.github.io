@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { buildShopifyCartPermalink, defaultCampaignAttribution, normalizeDiscountCode, resolveCampaignAttribution } from "./commerce.mjs";
 import rawCatalog from "./jd-products.json";
 import rawShopifyVariants from "./shopify-variants.json";
@@ -471,6 +471,20 @@ export default function Home() {
     document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function moveHeroStage(event: ReactPointerEvent<HTMLElement>) {
+    if (event.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+    event.currentTarget.style.setProperty("--hero-shift-x", `${x * 22}px`);
+    event.currentTarget.style.setProperty("--hero-shift-y", `${y * 18}px`);
+  }
+
+  function resetHeroStage(event: ReactPointerEvent<HTMLElement>) {
+    event.currentTarget.style.setProperty("--hero-shift-x", "0px");
+    event.currentTarget.style.setProperty("--hero-shift-y", "0px");
+  }
+
   return (
     <main>
       <header className="site-header">
@@ -489,19 +503,31 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="hero" id="top">
+      <section className="hero" id="top" onPointerMove={moveHeroStage} onPointerLeave={resetHeroStage}>
+        <div className="hero-ambient" aria-hidden="true"><span>FIGURE</span><span>ARCHIVE</span></div>
         <div className="hero-copy">
-          <p className="eyebrow">AUTHENTIC FIGURE ARCHIVE</p>
-          <h1>按作品，找到你爱的角色。</h1>
-          <p className="hero-description">916 件正版潮玩手办，完整整理为<br />IP、角色、款式三级目录。</p>
+          <p className="eyebrow">FIGURE CULTURE / ORIGI ARCHIVE</p>
+          <h1>让角色，<br />走出屏幕。</h1>
+          <p className="hero-description">从作品进入角色，再挑选真正想收藏的款式。<br />正版手办与模型，按 IP、角色、款式清晰整理。</p>
           <div className="hero-actions">
-            <button className="primary-button" onClick={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}>开始选购 <span>→</span></button>
-            <a href="#new-arrivals">浏览全部商品 <span>↘</span></a>
+            <button className="primary-button" onClick={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}>进入收藏世界 <span>↗</span></button>
+            <a href="#new-arrivals">探索全部款式 <span>↘</span></a>
           </div>
-          <div className="hero-footnote"><span>916</span> 全部款式已进入独立店铺目录</div>
+          <div className="hero-highlights" aria-label="店铺特色"><span><b>01</b> 正版授权</span><span><b>02</b> 按角色选购</span><span><b>03</b> 安全结算</span></div>
         </div>
         <div className="hero-media">
-          <img src={heroProduct.image} alt={heroProduct.title} />
+          <div className="hero-halo" aria-hidden="true"></div>
+          <span className="hero-ring hero-ring-one" aria-hidden="true"></span>
+          <span className="hero-ring hero-ring-two" aria-hidden="true"></span>
+          <span className="hero-spark hero-spark-one" aria-hidden="true"></span>
+          <span className="hero-spark hero-spark-two" aria-hidden="true"></span>
+          <span className="hero-spark hero-spark-three" aria-hidden="true"></span>
+          <div className="hero-stage">
+            <span className="hero-stage-label" aria-hidden="true">OBJECT / ORIGI 001</span>
+            <div className="hero-image-shell"><img src={heroProduct.image} alt={heroProduct.title} /></div>
+            <span className="hero-stage-edition" aria-hidden="true">AUTHENTIC DISPLAY MODE</span>
+          </div>
+          <span className="hero-stamp" aria-hidden="true">ORIGI<br />SELECTED</span>
           <div className="hero-product-card">
             <div><span>ORIGI SELECTION</span><strong>{heroProduct.variant}</strong></div>
             <div className={`hero-price ${heroProduct.priceStatus !== "verified" ? "price-pending" : ""}`}>
@@ -512,6 +538,7 @@ export default function Home() {
             <button onClick={() => addToCart(heroProduct)} aria-label={`将 ${heroProduct.variant} 加入购物袋`}>＋</button>
           </div>
         </div>
+        <div className="hero-marquee" aria-hidden="true"><div>{Array.from({ length: 6 }, (_, index) => <span key={index}>ART TOY · SCALE FIGURE · COLLECTIBLE · NEW DROP ·</span>)}</div></div>
       </section>
 
       <section className="collection-browser" id="catalog">
