@@ -1299,19 +1299,25 @@
         "label": "【日本进口】悠闲时光 纲手-16CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/392539/39/6343/183215/697bade6Fd88a9e77/0083400400de3006.png",
         "skuId": "10209137092027",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 338,
+        "finalPrice": 328
       },
       {
         "label": "【日本进口】MS 白-16CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/388530/13/15815/188020/697ba5acFd9955145/0083400400243080.png",
         "skuId": "10209137092015",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 278,
+        "finalPrice": 268
       },
       {
         "label": "【日本进口】REPOPRIZE 春野樱-10CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/392297/6/8245/163830/697b9e37F6a9f39eb/0083400400d2433f.png",
         "skuId": "10209137091994",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 278,
+        "finalPrice": 268
       },
       {
         "label": "【日本进口】VS 带土 阿飞-15CM",
@@ -3638,25 +3644,33 @@
         "label": "【日本进口】宇髓天元 音柱-11CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/393209/16/10178/2812423/6984e487F3441ee84/00834c84c8b55d5d.png",
         "skuId": "10210857534010",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 238,
+        "finalPrice": 228
       },
       {
         "label": "【日本进口】玄弥-10CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/389999/32/17562/2805090/6984e60bFabc21c8f/00834e14e13ba930.png",
         "skuId": "10210857534002",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 478,
+        "finalPrice": 468
       },
       {
         "label": "【日本进口】灶门祢豆子-11CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/394341/16/6094/2810204/6984e377Fe0d8d80d/00834d64d663c5dc.png",
         "skuId": "10210857534004",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 478,
+        "finalPrice": 468
       },
       {
         "label": "【日本进口】MINI灶门炭治郎-10CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/391910/32/14783/2810227/6984e9e3Faa04be01/00834c64c65c3a57.png",
         "skuId": "10210857534026",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 418,
+        "finalPrice": 408
       }
     ]
   },
