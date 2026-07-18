@@ -1317,7 +1317,9 @@
         "label": "【日本进口】VS 带土 阿飞-15CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/392144/24/8235/216368/697bb3b2F10c38832/008340040051a6bb.png",
         "skuId": "10209137092090",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 718,
+        "finalPrice": 708
       }
     ]
   },
@@ -3628,7 +3630,9 @@
         "label": "",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/388750/9/20012/2825405/6984e55fFc75c0fc9/00834d24d25fdfa6.png",
         "skuId": "10210857534007",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 438,
+        "finalPrice": 428
       },
       {
         "label": "【日本进口】宇髓天元 音柱-11CM",
