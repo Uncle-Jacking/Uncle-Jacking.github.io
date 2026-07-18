@@ -641,7 +641,7 @@ export default function Home() {
       <section className="product-section" id="new-arrivals">
         <div className="section-heading">
           <div><p className="eyebrow">COMPLETE PRODUCT CATALOG</p><h2>{selectedCharacter === "全部角色" ? (selectedIp === "全部IP" ? `全部 ${products.length} 件商品` : `${selectedIp} · 全部角色`) : `${selectedCharacter} · 全部款式`}</h2></div>
-          <p>全部 916 个款式均作为独立商品展示。已核验价格按具体 SKU 显示；其余款式将在供应端报价恢复后继续更新，不使用估算价。</p>
+          <p>全部 {products.length} 个款式均作为独立商品展示。已核验价格按具体 SKU 显示；其余款式将在供应端报价恢复后继续更新，不使用估算价。</p>
         </div>
 
         <div className="product-toolbar">
@@ -680,9 +680,9 @@ export default function Home() {
       <section className="provenance" id="provenance">
         <div className="provenance-image"><img src={products.find((item) => item.ip === "葬送的芙莉莲")?.image || heroProduct.image} alt="正版潮玩手办商品" referrerPolicy="no-referrer" /></div>
         <div className="provenance-copy">
-          <p className="eyebrow">THE COMPLETE ARCHIVE</p><h2>900 多件商品，<br />一间店里看完。</h2>
+          <p className="eyebrow">THE COMPLETE ARCHIVE</p><h2>{products.length} 件商品，<br />一间店里看完。</h2>
           <p>从海贼王、鬼灭之刃、咒术回战，到高达、初音未来和更多热门作品，全部商品已经整理进原界目录。选择 IP 后进入角色，再浏览同一角色的不同造型、版本与尺寸。</p>
-          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>916 件独立商品</small></div><div><span>02</span><strong>无水印原图</strong><small>保留原始分辨率</small></div><div><span>03</span><strong>SKU 价格</strong><small>{verifiedPriceCount} 款已核验</small></div></div>
+          <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>{products.length} 件独立商品</small></div><div><span>02</span><strong>无水印原图</strong><small>保留原始分辨率</small></div><div><span>03</span><strong>SKU 价格</strong><small>{verifiedPriceCount} 款已核验</small></div></div>
         </div>
       </section>
 
