@@ -3707,7 +3707,9 @@
         "label": "【日本进口】蜘蛛侠 毒液-20CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/399423/37/2764/2800938/69a06edeF78d4be9f/00835dc5dc609b08.png",
         "skuId": "10210856619687",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 318,
+        "finalPrice": 308
       },
       {
         "label": "【日本进口】蜘蛛侠2099-19CM",
