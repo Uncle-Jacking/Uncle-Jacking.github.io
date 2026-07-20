@@ -3715,7 +3715,9 @@
         "label": "【日本进口】蜘蛛侠2099-19CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/397905/4/6478/2632512/69a06ee1F9284ffc3/00835dc5dc6db3ab.png",
         "skuId": "10210856619688",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 476,
+        "finalPrice": 466
       },
       {
         "label": "【日本进口】蜘蛛侠-19CM",
