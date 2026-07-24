@@ -3809,23 +3809,35 @@
       },
       {
         "label": "【日本进口】世嘉SEGA 死侍 文字-20CM",
-        "priceStatus": "pending"
+        "image": "https://m.360buyimg.com/imgzone/jfs/t1/388765/35/13056/2785887/6978e2e3F73cf57b3/008343d43db5186d.png",
+        "skuId": "10209137441599",
+        "priceStatus": "verified",
+        "price": 338,
+        "finalPrice": 328
       },
       {
         "label": "【日本进口】世嘉SEGA 蜘蛛侠 黑色战衣-20CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/390348/27/9471/2814467/6978e09dF9af75a67/00834554559ca61c.png",
         "skuId": "10209137441600",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 458,
+        "finalPrice": 448
       },
       {
         "label": "【日本进口】世嘉SEGA 迈尔斯-17CM",
-        "priceStatus": "pending"
+        "image": "https://m.360buyimg.com/imgzone/jfs/t1/391932/13/7363/2822851/6978e2e4Fa4a43f96/0083476476696875.png",
+        "skuId": "10209137441604",
+        "priceStatus": "verified",
+        "price": 468,
+        "finalPrice": 458
       },
       {
         "label": "【日本进口】世嘉SEGA 格温-19CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/387340/1/17966/2814093/6978e090Fe7f3c489/008348b48bd04392.png",
         "skuId": "10209137441605",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 478,
+        "finalPrice": 468
       },
       {
         "label": "【日本进口】世嘉SEGA 蜘蛛侠-12CM",
@@ -3833,17 +3845,27 @@
       },
       {
         "label": "【日本进口】世嘉SEGA 蜘蛛侠 毒液-20CM",
-        "priceStatus": "pending"
+        "image": "https://m.360buyimg.com/imgzone/jfs/t1/389378/9/10218/2805032/6978e1f3Ff7afb679/00834584583951ba.png",
+        "skuId": "10209137441607",
+        "priceStatus": "verified",
+        "price": 298,
+        "finalPrice": 288
       },
       {
         "label": "【日本进口】万代眼镜厂 死侍 造型2-18CM",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/390371/38/9110/2833891/6978e389F14ee62f3/008347d47dc45421.png",
         "skuId": "10209137441608",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 278,
+        "finalPrice": 268
       },
       {
         "label": "【日本进口】世嘉SEGA 蜘蛛侠 格温",
-        "priceStatus": "pending"
+        "image": "https://m.360buyimg.com/imgzone/jfs/t1/386719/13/20647/2806890/6978e1f0Fc1f6a380/008345c45cc11ab2.png",
+        "skuId": "10209137441610",
+        "priceStatus": "verified",
+        "price": 338,
+        "finalPrice": 328
       }
     ]
   },
@@ -3854,24 +3876,35 @@
     "image": "https://m.360buyimg.com/imgzone/jfs/t1/388042/36/7969/2658080/696dd7ecF2e391681/00834764768a7c90.png",
     "variants": [
       {
-        "label": "",
+        "label": "【日本进口】 Maximatic 乙骨忧太 约24cm",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/388042/36/7969/2658080/696dd7ecF2e391681/00834764768a7c90.png",
         "skuId": "10209079384678",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 198,
+        "finalPrice": 188
+      },
+      {
+        "label": "【日本进口】 MAXIMATIC 两面宿傩约21cm",
+        "image": "https://m.360buyimg.com/imgzone/jfs/t1/391038/39/2050/2670412/696dda72Ffa890ca5/00834644641f40f8.png",
+        "skuId": "10209079384679",
+        "priceStatus": "verified",
+        "price": 358,
+        "finalPrice": 348
       },
       {
         "label": "【日本进口】KOA 五条悟 怀玉约22cm",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/385105/1/16674/2601327/696ddc6cF5418fab1/008345145134c6ba.png",
         "skuId": "10209079384680",
-        "priceStatus": "pending"
+        "priceStatus": "verified",
+        "price": 276,
+        "finalPrice": 266
       },
       {
-        "label": "【日本进口】眼镜厂 咒魂 胀相约17cm",
-        "image": "https://m.360buyimg.com/imgzone/jfs/t1/387724/33/9826/2584505/696df0f1F6d7ae340/008345145120d635.png",
-        "skuId": "10209079384702",
-        "price": 358,
-        "finalPrice": 348,
-        "priceStatus": "verified"
+        "label": "【日本进口】 KOA 夏油杰约22cm",
+        "skuId": "10209079384681",
+        "priceStatus": "verified",
+        "price": 336,
+        "finalPrice": 326
       },
       {
         "label": "【日本进口】衬衫 夏油杰约21cm",
@@ -3882,11 +3915,61 @@
         "priceStatus": "verified"
       },
       {
+        "label": "【日本进口】眼镜厂 衬衫 五条悟约21cm",
+        "skuId": "10209079384683",
+        "priceStatus": "verified",
+        "price": 258,
+        "finalPrice": 248
+      },
+      {
         "label": "【日本进口】眼镜厂 正装 五条悟 约15cm",
         "image": "https://m.360buyimg.com/imgzone/jfs/t1/390747/1/2176/2664446/696de087F2331906c/00834894893de689.png",
         "skuId": "10209079384686",
         "price": 258,
         "finalPrice": 248,
+        "priceStatus": "verified"
+      },
+      {
+        "label": "【日本进口】眼镜厂 咒魂 与幸吉约16cm",
+        "skuId": "10209079384688",
+        "priceStatus": "verified",
+        "price": 338,
+        "finalPrice": 328
+      },
+      {
+        "label": "【日本进口】眼镜厂 五条悟 怀玉玉折约17cm",
+        "skuId": "10209079384689",
+        "priceStatus": "verified",
+        "price": 258,
+        "finalPrice": 248
+      },
+      {
+        "label": "【日本进口】眼镜厂 咒魂 乙骨忧太约16cm",
+        "skuId": "10209079384690",
+        "priceStatus": "verified",
+        "price": 278,
+        "finalPrice": 268
+      },
+      {
+        "label": "【日本进口】眼镜厂 咒魂 禅院真希约15cm",
+        "skuId": "10209079384691",
+        "priceStatus": "verified",
+        "price": 398,
+        "finalPrice": 388
+      },
+      {
+        "label": "【日本进口】眼镜厂 咒魂 加茂宪纪约16cm",
+        "skuId": "10209079384692",
+        "priceStatus": "verified",
+        "price": 278,
+        "finalPrice": 268
+      },
+      {
+        "label": "【日本进口】眼镜厂 咒魂 胀相约17cm",
+        "image": "https://m.360buyimg.com/imgzone/jfs/t1/387724/33/9826/2584505/696df0f1F6d7ae340/008345145120d635.png",
+        "skuId": "10209079384702",
+        "price": 358,
+        "finalPrice": 348,
         "priceStatus": "verified"
       }
     ]
