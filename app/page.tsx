@@ -24,7 +24,6 @@ type Product = {
   id: string;
   sku: string;
   title: string;
-  character: string;
   variant: string;
   brand: string;
   ip: string;
@@ -133,28 +132,6 @@ const ipPatterns: Array<[string, RegExp]> = [
   ["机动战士高达", /高达|境界战机/],
 ];
 
-const characterNames: Record<string, string[]> = {
-  "海贼王": ["蒙奇·D·路飞", "克洛克达尔", "汉库克", "佩罗娜", "蕾贝卡", "白星公主", "杰克逊号", "路飞", "索隆", "娜美", "山治", "罗杰", "路奇", "艾斯", "萨博", "巴基", "女帝", "布鲁克", "乌索普", "乌塔", "沙鳄", "大熊", "小菊", "罗"],
-  "咒术回战": ["五条悟", "虎杖悠仁", "乙骨忧太", "钉崎野蔷薇", "禅院真希", "狗卷棘", "伏黑惠", "熊猫"],
-  "七龙珠": ["自在极意功孙悟空", "孙悟空", "小悟空", "孙悟天", "贝吉塔", "弗利萨", "沙鲁", "短笛"],
-  "鬼灭之刃": ["灶门炭治郎", "灶门祢豆子", "栗花落香奈乎", "炼狱杏寿郎", "宇髄天元", "我妻善逸", "富冈义勇", "蝴蝶忍", "伊之助", "无惨", "祢豆子", "音柱"],
-  "火影忍者": ["宇智波带土", "漩涡鸣人", "千手扉间", "千手柱间", "春野樱", "卡卡西", "日向雏田", "秋道丁次", "九喇嘛", "雏田"],
-  "葬送的芙莉莲": ["芙莉莲", "菲伦", "辛美尔", "阿乌拉"],
-  "Re:从零开始的异世界生活": ["碧翠丝", "爱蜜莉雅", "蕾姆", "拉姆"],
-  "五等分的花嫁": ["中野一花", "中野二乃", "中野三玖", "中野四叶", "中野五月", "一花", "二乃", "三玖", "四叶", "五月"],
-  "宝可梦": ["MEGA喷火龙X", "喷火龙X", "暗黑酋雷姆", "阿尔宙斯", "超梦", "伊布"],
-  "初音未来": ["初音未来", "重音", "花里实乃里"],
-  "机动战士高达": ["RX-78-2", "巴巴托斯", "独角兽高达", "强袭高达", "能天使", "沙扎比", "量子00Q", "高达"],
-  "进击的巨人": ["艾伦", "三笠", "利威尔"],
-  "魔女之旅": ["伊蕾娜"],
-  "新世纪福音战士": ["明日香", "绫波丽", "初号机", "零号机"],
-  "孤独摇滚": ["后藤一里", "喜多郁代", "伊地知虹夏", "山田凉"],
-  "蓝色监狱": ["洁世一", "千切豹马", "凪诚士郎", "蜂乐回"],
-  "OVERLORD": ["雅儿贝德", "安兹"],
-  "我推的孩子": ["有马加奈", "星野爱", "露比", "阿库亚"],
-  "莉可丽丝": ["锦木千束", "井之上泷奈"],
-};
-
 const featuredIpNames = ["海贼王", "鬼灭之刃", "Re:从零开始的异世界生活", "七龙珠", "咒术回战", "宝可梦", "魔女之旅", "新世纪福音战士"];
 const ipAccentColors: Record<string, string> = {
   "海贼王": "#f0643f",
@@ -192,25 +169,6 @@ function formatPrice(price?: number) {
   return typeof price === "number" ? `¥${price.toFixed(2)}` : "暂无报价";
 }
 
-function detectCharacter(ip: string, label: string, title: string) {
-  const names = [...(characterNames[ip] || [])].sort((a, b) => b.length - a.length);
-  const fromLabel = names.find((name) => label.replace(/\s+/g, "").includes(name.replace(/\s+/g, "")));
-  if (fromLabel) return fromLabel;
-  const fromTitle = names.find((name) => title.replace(/\s+/g, "").includes(name.replace(/\s+/g, "")));
-  if (fromTitle) return fromTitle;
-
-  const cleaned = label
-    .replace(/【[^】]+】/g, " ")
-    .replace(/\b(?:BANDAI|BANPRESTO|SEGA|TAITO|FURYU|GSC|DXF|ROS|KOA|SPM|FES|BWFC|Q\s*posket|Luminasta|Yumemirize|Coreful|Aerial|ESP|TTI|HG|MG|RG)\b/gi, " ")
-    .replace(/眼镜厂|万代|世嘉|日本进口|日版进口|原装进口|特别版|限定版|原色|异色版|礼服|泳装|兔女郎|泡面压|坐姿|小坐|战斗版|改进版|高配色|特别配色|特别色|A款|B款|白色|黑色|浅色/g, " ")
-    .replace(/[-—]\s*\d+(?:\.\d+)?\s*CM\b.*$/i, " ")
-    .replace(/\b\d+(?:\.\d+)?\s*CM\b/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const candidates = cleaned.match(/[\u3400-\u9fff·・]{2,10}/g) || [];
-  return candidates.find((item) => !/^(和之国|未来岛|历史盒子|英姿人偶|人气排名|全新正品|世界计划|超级赛亚人)$/.test(item)) || cleaned.slice(0, 18) || "其他角色";
-}
-
 const catalogCollections = (rawCatalog as RawProduct[]).filter((item) => !/^运费差价/.test(item.title));
 const shopifyVariants = rawShopifyVariants as Record<string, string>;
 
@@ -224,7 +182,6 @@ const products: Product[] = catalogCollections.flatMap((item) => {
       id: `${item.sku}-${index}`,
       sku: option.skuId || item.sku,
       title: item.title,
-      character: detectCharacter(ip, variant, item.title),
       variant,
       brand: detectBrand(item.title),
       ip,
@@ -252,7 +209,6 @@ function isShoppable(product: Product) {
 export default function Home() {
   const [category, setCategory] = useState<(typeof categories)[number]>("全部");
   const [selectedIp, setSelectedIp] = useState("全部IP");
-  const [selectedCharacter, setSelectedCharacter] = useState("全部角色");
   const [ipQuery, setIpQuery] = useState("");
   const [allIpsOpen, setAllIpsOpen] = useState(false);
   const [ipPortalVisible, setIpPortalVisible] = useState(false);
@@ -271,8 +227,7 @@ export default function Home() {
   const ipGroups = useMemo(() => {
     return Array.from(new Set(products.map((product) => product.ip))).map((ip) => {
       const scoped = products.filter((product) => product.ip === ip);
-      const characters = Array.from(new Set(scoped.map((product) => product.character)));
-      return { ip, characterCount: characters.length, styleCount: scoped.length, image: scoped[0]?.image || "", characters: characters.slice(0, 5) };
+      return { ip, styleCount: scoped.length, image: scoped[0]?.image || "" };
     }).sort((a, b) => b.styleCount - a.styleCount || a.ip.localeCompare(b.ip, "zh-CN"));
   }, []);
 
@@ -284,15 +239,6 @@ export default function Home() {
     const remaining = ipGroups.filter((group) => !preferred.some((item) => item.ip === group.ip));
     return [...preferred, ...remaining].slice(0, 8);
   }, [ipGroups]);
-
-  const charactersForIp = useMemo(() => {
-    if (selectedIp === "全部IP") return [];
-    const scoped = products.filter((product) => product.ip === selectedIp);
-    return Array.from(new Set(scoped.map((product) => product.character))).map((character) => {
-      const styles = scoped.filter((product) => product.character === character);
-      return { character, styleCount: styles.length, image: styles[0].image };
-    }).sort((a, b) => b.styleCount - a.styleCount || a.character.localeCompare(b.character, "zh-CN"));
-  }, [selectedIp]);
 
   const matchingIpGroups = useMemo(() => {
     const normalized = ipQuery.trim().toLowerCase();
@@ -313,11 +259,10 @@ export default function Home() {
     return products.filter((product) => {
       const categoryMatch = category === "全部" || product.category === category;
       const ipMatch = selectedIp === "全部IP" || product.ip === selectedIp;
-      const characterMatch = selectedCharacter === "全部角色" || product.character === selectedCharacter;
-      const queryMatch = !normalized || `${product.title}${product.variant}${product.character}${product.brand}${product.ip}`.toLowerCase().includes(normalized);
-      return categoryMatch && ipMatch && characterMatch && queryMatch;
+      const queryMatch = !normalized || `${product.title}${product.variant}${product.brand}${product.ip}`.toLowerCase().includes(normalized);
+      return categoryMatch && ipMatch && queryMatch;
     });
-  }, [category, query, selectedCharacter, selectedIp]);
+  }, [category, query, selectedIp]);
 
   const heroProduct = products.find(isShoppable) || products[0];
 
@@ -489,29 +434,20 @@ export default function Home() {
   function browseCategory(nextCategory: (typeof categories)[number]) {
     setCategory(nextCategory);
     setSelectedIp("全部IP");
-    setSelectedCharacter("全部角色");
     setMenuOpen(false);
     document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function chooseIp(nextIp: string) {
     setSelectedIp(nextIp);
-    setSelectedCharacter("全部角色");
     setCategory("全部");
     setQuery("");
     setIpQuery("");
   }
 
-  function chooseCharacter(character: string) {
-    setSelectedCharacter(character);
-    setCategory("全部");
-    setQuery("");
-    document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
-  }
-
   function chooseIpCard(nextIp: string) {
     chooseIp(nextIp);
-    window.setTimeout(() => document.getElementById("character-archive")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    window.setTimeout(() => document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
 
   function moveHeroStage(event: ReactPointerEvent<HTMLElement>) {
@@ -557,13 +493,13 @@ export default function Home() {
         <div className="hero-ambient" aria-hidden="true"><span>FIGURE</span><span>ARCHIVE</span></div>
         <div className="hero-copy">
           <p className="eyebrow">FIGURE CULTURE / ORIGI ARCHIVE</p>
-          <h1>让角色，<br />走出屏幕。</h1>
-          <p className="hero-description">从作品进入角色，再挑选真正想收藏的款式。<br />正版手办与模型，按 IP、角色、款式清晰整理。</p>
+          <h1>让热爱，<br />走出屏幕。</h1>
+          <p className="hero-description">从作品进入收藏，再挑选真正想拥有的款式。<br />正版手办与模型，按 IP 与款式清晰整理。</p>
           <div className="hero-actions">
             <button className="primary-button" onClick={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}>进入收藏世界 <span>↗</span></button>
             <a href="#new-arrivals">探索全部款式 <span>↘</span></a>
           </div>
-          <div className="hero-highlights" aria-label="店铺特色"><span><b>01</b> 正版授权</span><span><b>02</b> 按角色选购</span><span><b>03</b> 安全结算</span></div>
+          <div className="hero-highlights" aria-label="店铺特色"><span><b>01</b> 正版授权</span><span><b>02</b> 按 IP 选购</span><span><b>03</b> 安全结算</span></div>
         </div>
         <div className="hero-media">
           <div className="hero-halo" aria-hidden="true"></div>
@@ -594,16 +530,16 @@ export default function Home() {
       <section className={`collection-browser ${ipPortalVisible ? "is-visible" : ""}`} id="catalog" onPointerMove={movePortalGlow}>
         <div className="portal-glow" aria-hidden="true"></div>
         <div className="collection-heading">
-          <div><p className="eyebrow">IP DIRECTORY / CHOOSE YOUR WORLD</p><h2>先选 IP，<br />再选角色。</h2></div>
-          <p>不是在一堆商品里盲目搜索。先进入热爱的世界，再锁定想收藏的角色，查看同一角色的不同造型与版本。</p>
+          <div><p className="eyebrow">IP DIRECTORY / CHOOSE YOUR WORLD</p><h2>先选 IP，<br />再选款式。</h2></div>
+          <p>不是在一堆商品里盲目搜索。先进入热爱的作品，再浏览该 IP 收录的全部造型、版本与尺寸。</p>
         </div>
 
         <div className="ip-showcase" role="group" aria-label="热门 IP 作品">
           {featuredIpGroups.map((group, index) => (
             <article className={`ip-showcase-card ${selectedIp === group.ip ? "active" : ""}`} key={group.ip} style={{ "--ip-accent": ipAccentColors[group.ip] || "#f0643f", "--ip-delay": `${index * 70}ms` } as CSSProperties}>
-              <button onClick={() => chooseIpCard(group.ip)} aria-label={`进入 ${group.ip}，选择角色`}>
+              <button onClick={() => chooseIpCard(group.ip)} aria-label={`进入 ${group.ip}，查看全部款式`}>
                 <div className="ip-showcase-media"><img src={group.image} alt="" loading={index > 3 ? "lazy" : "eager"} referrerPolicy="no-referrer" /><span aria-hidden="true"></span></div>
-                <div className="ip-showcase-copy"><small>0{index + 1}</small><h3>{group.ip}</h3><p>{group.characters.join(" · ")}</p><i aria-hidden="true">↗</i></div>
+                <div className="ip-showcase-copy"><small>0{index + 1}</small><h3>{group.ip}</h3><p>{group.styleCount} 个独立款式</p><i aria-hidden="true">↗</i></div>
               </button>
             </article>
           ))}
@@ -620,27 +556,13 @@ export default function Home() {
             {displayedIpGroups.map((group) => <button key={group.ip} className={selectedIp === group.ip ? "active" : ""} onClick={() => chooseIp(group.ip)}><span>{group.ip}</span><small>{group.styleCount} 款</small></button>)}
           </div>
           {ipQuery && matchingIpGroups.length === 0 && <div className="ip-empty">没有找到“{ipQuery}”，试试其他作品名称。</div>}
-        </div>
-
-        <div className="character-archive" id="character-archive">
-          <div className="catalog-label-row"><strong>{selectedIp === "全部IP" ? "角色档案" : selectedIp}</strong><small>{selectedIp === "全部IP" ? "先选择一个 IP 作品" : `${charactersForIp.length} 个角色 · 继续选择角色`}</small></div>
-          <div className="character-selector" role="group" aria-label="选择角色">
-            {selectedIp === "全部IP" ? (
-              <button className="active" onClick={() => chooseCharacter("全部角色")}><span className="character-monogram">IP</span><span><strong>请先选择作品</strong><small>从上方热门卡片或全部索引进入</small></span></button>
-            ) : (
-              <>
-                <button className={selectedCharacter === "全部角色" ? "active" : ""} onClick={() => chooseCharacter("全部角色")}><span className="character-monogram">ALL</span><span><strong>全部角色</strong><small>{products.filter((product) => product.ip === selectedIp).length} 款</small></span></button>
-                {charactersForIp.map((item) => <button key={item.character} className={selectedCharacter === item.character ? "active" : ""} onClick={() => chooseCharacter(item.character)}><img src={item.image} alt="" loading="lazy" /><span><strong>{item.character}</strong><small>{item.styleCount} 个款式</small></span></button>)}
-              </>
-            )}
-          </div>
-          <div className="catalog-path" aria-live="polite"><span>当前位置</span><strong>{selectedIp}</strong><i>→</i><strong>{selectedCharacter}</strong><i>→</i><b>{visibleProducts.length} 个款式</b></div>
+          <div className="catalog-path" aria-live="polite"><span>当前位置</span><strong>{selectedIp}</strong><i>→</i><b>{visibleProducts.length} 个款式</b></div>
         </div>
       </section>
 
       <section className="product-section" id="new-arrivals">
         <div className="section-heading">
-          <div><p className="eyebrow">COMPLETE PRODUCT CATALOG</p><h2>{selectedCharacter === "全部角色" ? (selectedIp === "全部IP" ? `全部 ${products.length} 件商品` : `${selectedIp} · 全部角色`) : `${selectedCharacter} · 全部款式`}</h2></div>
+          <div><p className="eyebrow">COMPLETE PRODUCT CATALOG</p><h2>{selectedIp === "全部IP" ? `全部 ${products.length} 件商品` : `${selectedIp} · 全部款式`}</h2></div>
           <p>全部 {products.length} 个款式均作为独立商品展示。已核验价格按具体 SKU 显示；其余款式将在供应端报价恢复后继续更新，不使用估算价。</p>
         </div>
 
@@ -655,11 +577,11 @@ export default function Home() {
               <div className="product-image-wrap">
                 <span className="product-badge">正版精选</span>
                 <button className={`favorite-button ${favorites.includes(product.id) ? "active" : ""}`} onClick={() => toggleFavorite(product.id)} aria-pressed={favorites.includes(product.id)} aria-label={favorites.includes(product.id) ? `取消收藏 ${product.variant}` : `收藏 ${product.variant}`}>{favorites.includes(product.id) ? "♥" : "♡"}</button>
-                <img src={product.image} alt={`${product.ip} ${product.character} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
+                <img src={product.image} alt={`${product.ip} ${product.variant}`} loading={index > 5 ? "lazy" : "eager"} referrerPolicy="no-referrer" />
                 <button className="quick-add" disabled={!isShoppable(product)} onClick={() => addToCart(product)}>{isShoppable(product) ? "加入购物袋" : (product.priceStatus === "verified" ? "库存同步中" : "报价更新中")} <span>{isShoppable(product) ? "＋" : "·"}</span></button>
               </div>
               <div className="product-meta">
-                <p>{product.ip} · {product.character} · {product.brand}</p>
+                <p>{product.ip} · {product.brand}</p>
                 <div className="product-title-row"><h3>{product.variant}</h3><strong>正版</strong></div>
                 <div className={`product-price-row ${product.priceStatus !== "verified" ? "price-pending" : ""}`}>
                   {product.priceStatus === "verified" ? (
@@ -674,14 +596,14 @@ export default function Home() {
           ))}
         </div>
 
-        {visibleProducts.length === 0 && <div className="empty-state"><h3>没有找到相关商品</h3><p>换个关键词，或浏览全部商品。</p><button onClick={() => { setQuery(""); setCategory("全部"); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>查看全部</button></div>}
+        {visibleProducts.length === 0 && <div className="empty-state"><h3>没有找到相关商品</h3><p>换个关键词，或浏览全部商品。</p><button onClick={() => { setQuery(""); setCategory("全部"); setSelectedIp("全部IP"); }}>查看全部</button></div>}
       </section>
 
       <section className="provenance" id="provenance">
         <div className="provenance-image"><img src={products.find((item) => item.ip === "葬送的芙莉莲")?.image || heroProduct.image} alt="正版潮玩手办商品" referrerPolicy="no-referrer" /></div>
         <div className="provenance-copy">
           <p className="eyebrow">THE COMPLETE ARCHIVE</p><h2>{products.length} 件商品，<br />一间店里看完。</h2>
-          <p>从海贼王、鬼灭之刃、咒术回战，到高达、初音未来和更多热门作品，全部商品已经整理进原界目录。选择 IP 后进入角色，再浏览同一角色的不同造型、版本与尺寸。</p>
+          <p>从海贼王、鬼灭之刃、咒术回战，到高达、初音未来和更多热门作品，全部商品已经整理进原界目录。选择 IP 后，即可浏览该作品收录的不同造型、版本与尺寸。</p>
           <div className="proof-list"><div><span>01</span><strong>完整收录</strong><small>{products.length} 件独立商品</small></div><div><span>02</span><strong>无水印原图</strong><small>保留原始分辨率</small></div><div><span>03</span><strong>SKU 价格</strong><small>{verifiedPriceCount} 款已核验</small></div></div>
         </div>
       </section>
@@ -690,9 +612,9 @@ export default function Home() {
 
       <footer><div className="footer-brand"><strong>ORIGI</strong><span>原界 · 正版潮玩手办目录</span></div><div className="footer-links"><a href="#catalog">按 IP 选购</a><a href="#new-arrivals">全部商品</a><a href="#brands">品牌目录</a></div><div className="footer-note">© 2026 ORIGI 原界。正版潮玩与手办精选店铺。</div></footer>
 
-      {menuOpen && <div className="overlay mobile-menu" role="dialog" aria-modal="true" aria-label="移动端菜单"><button className="overlay-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">关闭</button><div className="mobile-menu-brand">ORIGI <span>原界</span></div><nav><button onClick={() => { setMenuOpen(false); document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); }}>按 IP / 角色选购 <span>01</span></button><button onClick={() => browseCategory("手办")}>手办 <span>02</span></button><button onClick={() => browseCategory("拼装模型")}>拼装模型 <span>03</span></button></nav></div>}
+      {menuOpen && <div className="overlay mobile-menu" role="dialog" aria-modal="true" aria-label="移动端菜单"><button className="overlay-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">关闭</button><div className="mobile-menu-brand">ORIGI <span>原界</span></div><nav><button onClick={() => { setMenuOpen(false); document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); }}>按 IP 选购 <span>01</span></button><button onClick={() => browseCategory("手办")}>手办 <span>02</span></button><button onClick={() => browseCategory("拼装模型")}>拼装模型 <span>03</span></button></nav></div>}
 
-      {searchOpen && <div className="overlay search-overlay" role="dialog" aria-modal="true" aria-label="搜索商品"><button className="overlay-close" onClick={() => setSearchOpen(false)} aria-label="关闭搜索">关闭</button><div className="search-panel"><p className="eyebrow">SEARCH THE CATALOG</p><label htmlFor="site-search">想找哪一个角色？</label><div className="search-input-row"><input id="site-search" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入角色、IP、品牌或款式" /><button onClick={() => { setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button></div><div className="search-suggestions"><span>热门：</span>{["海贼王", "路飞", "咒术回战", "鬼灭之刃", "初音未来"].map((item) => <button key={item} onClick={() => { setQuery(item); setSelectedIp("全部IP"); setSelectedCharacter("全部角色"); }}>{item}</button>)}</div></div></div>}
+      {searchOpen && <div className="overlay search-overlay" role="dialog" aria-modal="true" aria-label="搜索商品"><button className="overlay-close" onClick={() => setSearchOpen(false)} aria-label="关闭搜索">关闭</button><div className="search-panel"><p className="eyebrow">SEARCH THE CATALOG</p><label htmlFor="site-search">想找哪一部作品？</label><div className="search-input-row"><input id="site-search" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入 IP、品牌或款式" /><button onClick={() => { setSelectedIp("全部IP"); setSearchOpen(false); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}>搜索</button></div><div className="search-suggestions"><span>热门：</span>{["海贼王", "咒术回战", "鬼灭之刃", "初音未来", "宝可梦"].map((item) => <button key={item} onClick={() => { setQuery(item); setSelectedIp("全部IP"); }}>{item}</button>)}</div></div></div>}
 
       {favoritesOpen && (
         <div className="drawer-backdrop" role="presentation" onClick={() => setFavoritesOpen(false)}>
@@ -704,7 +626,7 @@ export default function Home() {
                   <article className="cart-item" key={product.id}>
                     <img src={product.image} alt={product.variant} referrerPolicy="no-referrer" />
                     <div className="cart-item-copy">
-                      <small>{product.ip} · {product.character}</small>
+                      <small>{product.ip} · {product.brand}</small>
                       <strong>{product.variant}</strong>
                       <span>{product.priceStatus === "verified" ? formatPrice(product.finalPrice ?? product.price) : "暂无报价"}</span>
                       <div className="drawer-item-actions"><button onClick={() => addToCart(product)}>加入购物袋</button><button onClick={() => toggleFavorite(product.id)}>取消收藏</button></div>
@@ -730,7 +652,7 @@ export default function Home() {
                   <article className="cart-item" key={product.id}>
                     <img src={product.image} alt={product.variant} referrerPolicy="no-referrer" />
                     <div className="cart-item-copy">
-                      <small>{product.ip} · {product.character}</small>
+                      <small>{product.ip} · {product.brand}</small>
                       <strong>{product.variant}</strong>
                       <span>{product.priceStatus === "verified" ? formatPrice(product.finalPrice ?? product.price) : "价格待更新"}</span>
                       <div className="cart-item-controls">
